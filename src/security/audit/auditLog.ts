@@ -1,3 +1,5 @@
+import { invoke } from "@tauri-apps/api/core";
+
 export type AuditEvent = {
   id: string;
   at: string;
@@ -6,30 +8,67 @@ export type AuditEvent = {
   metadata?: Record<string, unknown>;
 };
 
-const KEY = "veil.audit.events";
+type RustAuditEvent = {
+  id: string;
+  at: string;
+  eventType: string;
+  summary: string;
+  metadataJson?: string | null;
+};
+
 let memoryEvents: AuditEvent[] = [];
 
-function hasLocalStorage(): boolean {
-  return typeof globalThis.localStorage !== "undefined";
+function hasTauriRuntime(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
-function read(): AuditEvent[] {
-  if (!hasLocalStorage()) return memoryEvents;
+function fromRust(event: RustAuditEvent): AuditEvent {
+  return {
+    id: event.id,
+    at: event.at,
+    type: event.eventType,
+    summary: event.summary,
+    metadata: event.metadataJson ? JSON.parse(event.metadataJson) : undefined,
+  };
+}
 
-  try {
-    return JSON.parse(globalThis.localStorage.getItem(KEY) || "[]");
-  } catch {
-    return [];
+export async function appendAuditEventAsync(
+  input: Omit<AuditEvent, "id" | "at">
+): Promise<AuditEvent> {
+  if (!hasTauriRuntime()) {
+    const event: AuditEvent = {
+      ...input,
+      id: crypto.randomUUID(),
+      at: new Date().toISOString(),
+    };
+
+    memoryEvents = [event, ...memoryEvents].slice(0, 500);
+    return event;
   }
+
+  const event = await invoke<RustAuditEvent>("audit_append_event", {
+    eventType: input.type,
+    summary: input.summary,
+    metadataJson: input.metadata ? JSON.stringify(input.metadata) : null,
+  });
+
+  return fromRust(event);
 }
 
-function write(events: AuditEvent[]): void {
-  if (!hasLocalStorage()) {
-    memoryEvents = events;
+export async function listAuditEventsAsync(): Promise<AuditEvent[]> {
+  if (!hasTauriRuntime()) return memoryEvents;
+
+  const events = await invoke<RustAuditEvent[]>("audit_list_events");
+  return events.map(fromRust);
+}
+
+export async function clearAuditEventsAsync(): Promise<void> {
+  if (!hasTauriRuntime()) {
+    memoryEvents = [];
     return;
   }
 
-  globalThis.localStorage.setItem(KEY, JSON.stringify(events));
+  await invoke("audit_clear_events");
 }
 
 export function appendAuditEvent(input: Omit<AuditEvent, "id" | "at">): AuditEvent {
@@ -39,19 +78,18 @@ export function appendAuditEvent(input: Omit<AuditEvent, "id" | "at">): AuditEve
     at: new Date().toISOString(),
   };
 
-  const events = [event, ...read()].slice(0, 250);
-  write(events);
+  memoryEvents = [event, ...memoryEvents].slice(0, 500);
+
+  void appendAuditEventAsync(input);
+
   return event;
 }
 
 export function listAuditEvents(): AuditEvent[] {
-  return read();
+  return memoryEvents;
 }
 
 export function clearAuditEvents(): void {
   memoryEvents = [];
-
-  if (hasLocalStorage()) {
-    globalThis.localStorage.removeItem(KEY);
-  }
+  void clearAuditEventsAsync();
 }

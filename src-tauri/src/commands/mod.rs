@@ -2,7 +2,10 @@ use chrono::Utc;
 use tauri::AppHandle;
 use uuid::Uuid;
 
-use crate::storage::{read_bookmarks, write_bookmarks, VaultBookmark};
+use crate::storage::{
+    audit::{read_audit_events, write_audit_events, AuditEvent},
+    read_bookmarks, write_bookmarks, VaultBookmark,
+};
 
 #[tauri::command]
 pub fn vault_list_bookmarks(app: AppHandle) -> Result<Vec<VaultBookmark>, String> {
@@ -51,4 +54,37 @@ pub fn vault_remove_bookmark(app: AppHandle, id: String) -> Result<(), String> {
 #[tauri::command]
 pub fn vault_wipe_bookmarks(app: AppHandle) -> Result<(), String> {
     write_bookmarks(&app, &[])
+}
+
+#[tauri::command]
+pub fn audit_list_events(app: AppHandle) -> Result<Vec<AuditEvent>, String> {
+    read_audit_events(&app)
+}
+
+#[tauri::command]
+pub fn audit_append_event(
+    app: AppHandle,
+    event_type: String,
+    summary: String,
+    metadata_json: Option<String>,
+) -> Result<AuditEvent, String> {
+    let event = AuditEvent {
+        id: Uuid::new_v4().to_string(),
+        at: Utc::now().to_rfc3339(),
+        event_type,
+        summary,
+        metadata_json,
+    };
+
+    let mut events = read_audit_events(&app)?;
+    events.insert(0, event.clone());
+    events.truncate(500);
+    write_audit_events(&app, &events)?;
+
+    Ok(event)
+}
+
+#[tauri::command]
+pub fn audit_clear_events(app: AppHandle) -> Result<(), String> {
+    write_audit_events(&app, &[])
 }

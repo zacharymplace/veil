@@ -9,7 +9,10 @@ pub fn run() {
             commands::vault_list_bookmarks,
             commands::vault_save_bookmark,
             commands::vault_remove_bookmark,
-            commands::vault_wipe_bookmarks
+            commands::vault_wipe_bookmarks,
+            commands::audit_list_events,
+            commands::audit_append_event,
+            commands::audit_clear_events
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

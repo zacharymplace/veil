@@ -1,29 +1,32 @@
-import { useMemo, useState } from "react";
-import { clearAuditEvents, listAuditEvents } from "../../security/audit/auditLog";
+import { useEffect, useState } from "react";
+import {
+  clearAuditEventsAsync,
+  listAuditEventsAsync,
+  type AuditEvent,
+} from "../../security/audit/auditLog";
 
 export function AuditView() {
-  const [version, setVersion] = useState(0);
+  const [events, setEvents] = useState<AuditEvent[]>([]);
 
-  const events = useMemo(() => {
-    version;
-    return listAuditEvents();
-  }, [version]);
-
-  function refresh() {
-    setVersion((current) => current + 1);
+  async function refresh() {
+    setEvents(await listAuditEventsAsync());
   }
 
-  function clear() {
-    clearAuditEvents();
+  async function clear() {
+    await clearAuditEventsAsync();
+    await refresh();
+  }
+
+  useEffect(() => {
     refresh();
-  }
+  }, []);
 
   return (
     <section className="view">
       <div className="view-header">
         <div>
           <h1>Audit</h1>
-          <p>Local policy, session, and navigation events.</p>
+          <p>Rust-backed local policy, session, and navigation events.</p>
         </div>
 
         <div className="row-actions">

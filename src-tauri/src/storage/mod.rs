@@ -1,3 +1,5 @@
+pub mod audit;
+
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Manager};
