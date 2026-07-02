@@ -46,7 +46,7 @@ export function BrowserEngineView() {
   }
 
   function request(permission: BrowserPermission) {
-    browserEngineRequestPermission(permission);
+    browserEngineRequestPermission(session, permission);
     setVersion((current) => current + 1);
   }
 

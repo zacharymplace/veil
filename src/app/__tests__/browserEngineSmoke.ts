@@ -17,7 +17,7 @@ assert(nextSession.currentUrl === "https://example.com", "navigation should norm
 const download = browserEngineCheckDownload("https://example.com/file.zip");
 assert(download.action === "block", "downloads should be blocked");
 
-const camera = browserEngineRequestPermission("camera");
-assert(camera.action === "prompt", "camera permission should prompt");
+const camera = browserEngineRequestPermission(nextSession, "camera");
+assert(camera.status === "prompt", "camera permission should prompt");
 
 console.log("PASS browser engine smoke");
