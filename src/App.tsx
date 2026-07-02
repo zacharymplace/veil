@@ -11,6 +11,7 @@ import { SettingsView } from "./features/settings/SettingsView";
 import { DatabaseView } from "./features/database/DatabaseView";
 import { CoreView } from "./features/core/CoreView";
 import { BrowserEngineView } from "./features/browserEngine/BrowserEngineView";
+import { SessionIsolationView } from "./features/sessionIsolation/SessionIsolationView";
 
 export default function App() {
   const [adultGateAccepted, setAdultGateAccepted] = useState(false);
@@ -45,6 +46,7 @@ export default function App() {
       <section className="content-shell">
         {activeView === "home" && <HomeView />}
         {activeView === "browserEngine" && <BrowserEngineView />}
+        {activeView === "sessionIsolation" && <SessionIsolationView />}
         {activeView === "vault" && <VaultView />}
         {activeView === "privacy" && <PrivacyView />}
         {activeView === "audit" && <AuditView />}

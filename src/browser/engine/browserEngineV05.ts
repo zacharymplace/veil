@@ -8,11 +8,14 @@ import {
 } from "../session/sessionManager";
 import { profileLabel, type SessionProfile } from "../profiles/profiles";
 import { appendNavigationEntry, listNavigationHistory } from "../history/historyManager";
+import { createIsolationScope, getIsolationScope, listIsolationScopes } from "../isolation/sessionIsolation";
 import { cleanupBrowserSession } from "../cleanup/sessionCleanup";
 import { appendAuditEvent } from "../../security/audit/auditLog";
 
 export function createBrowserEngineSession(profile: SessionProfile): BrowserSession {
-  return createBrowserSession(profile);
+  const session = createBrowserSession(profile);
+  createIsolationScope(session);
+  return session;
 }
 
 export function browserEngineNavigate(
@@ -21,8 +24,12 @@ export function browserEngineNavigate(
 ): BrowserSession {
   const prepared = prepareNavigation(input);
 
+  const scope = getIsolationScope(session.id) ?? createIsolationScope(session);
+
   appendNavigationEntry({
     sessionId: session.id,
+    profile: session.profile,
+    namespace: scope.historyNamespace,
     url: prepared.url,
     decision: prepared.decision.action,
     reason: prepared.decision.reason,
@@ -82,4 +89,9 @@ export function browserEngineCleanup(session: BrowserSession): void {
 
 export function browserEngineHistory() {
   return listNavigationHistory();
+}
+
+
+export function browserEngineIsolationScopes() {
+  return listIsolationScopes();
 }

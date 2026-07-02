@@ -1,6 +1,8 @@
 export type NavigationEntry = {
   id: string;
   sessionId: string;
+  profile: string;
+  namespace: string;
   url: string;
   at: string;
   decision: "allow" | "block" | "prompt";
@@ -52,10 +54,18 @@ export function listNavigationHistory(): NavigationEntry[] {
   return read();
 }
 
+export function listNavigationHistoryForSession(sessionId: string): NavigationEntry[] {
+  return read().filter((entry) => entry.sessionId === sessionId);
+}
+
 export function clearNavigationHistory(): void {
   memoryHistory = [];
 
   if (hasLocalStorage()) {
     globalThis.localStorage.removeItem(KEY);
   }
+}
+
+export function clearNavigationHistoryForSession(sessionId: string): void {
+  write(read().filter((entry) => entry.sessionId !== sessionId));
 }
