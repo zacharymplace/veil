@@ -1,16 +1,30 @@
-import { useState } from "react";
-import { listBookmarks, removeBookmark, saveBookmark, wipeVault } from "./vault";
+import { useEffect, useState } from "react";
+import type { Bookmark } from "../../lib/types";
+import {
+  listBookmarksAsync,
+  removeBookmarkAsync,
+  saveBookmarkAsync,
+  wipeVaultAsync,
+} from "./vaultAsync";
 
 export function VaultView() {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [tagText, setTagText] = useState("");
-  const [bookmarks, setBookmarks] = useState(listBookmarks());
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
 
-  function addBookmark() {
+  async function refreshBookmarks() {
+    setBookmarks(await listBookmarksAsync());
+  }
+
+  useEffect(() => {
+    refreshBookmarks();
+  }, []);
+
+  async function addBookmark() {
     if (!url || !title) return;
 
-    saveBookmark({
+    await saveBookmarkAsync({
       url,
       title,
       tags: tagText
@@ -23,16 +37,16 @@ export function VaultView() {
     setUrl("");
     setTitle("");
     setTagText("");
-    setBookmarks(listBookmarks());
+    await refreshBookmarks();
   }
 
-  function deleteBookmark(id: string) {
-    removeBookmark(id);
-    setBookmarks(listBookmarks());
+  async function deleteBookmark(id: string) {
+    await removeBookmarkAsync(id);
+    await refreshBookmarks();
   }
 
-  function wipeAll() {
-    wipeVault();
+  async function wipeAll() {
+    await wipeVaultAsync();
     setBookmarks([]);
   }
 
@@ -41,7 +55,7 @@ export function VaultView() {
       <div className="view-header">
         <div>
           <h1>Vault</h1>
-          <p>Encrypted bookmark organization prototype.</p>
+          <p>Rust-backed bookmark persistence prototype.</p>
         </div>
         <button className="danger-button" onClick={wipeAll}>Wipe vault</button>
       </div>
@@ -56,12 +70,12 @@ export function VaultView() {
         </div>
 
         <div className="card">
-          <h2>Collections</h2>
-          <div className="collection-list">
-            <button>Favorites</button>
-            <button>Research</button>
-            <button>Saved</button>
-            <button>Watch Later</button>
+          <h2>Storage</h2>
+          <div className="mini-grid">
+            <span>Backend: Rust command</span>
+            <span>Format: local JSON</span>
+            <span>Encryption: planned</span>
+            <span>Items: {bookmarks.length}</span>
           </div>
         </div>
       </div>

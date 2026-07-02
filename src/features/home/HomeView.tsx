@@ -9,7 +9,7 @@ import {
 } from "../../services/browser/browserService";
 import { defaultPrivacyReport, privacyScore } from "../../services/privacy/privacyService";
 import { COLLECTIONS, vaultSummary } from "../../services/vault/vaultService";
-import { saveBookmark } from "../vault/vault";
+import { saveBookmarkAsync } from "../vault/vaultAsync";
 
 const PROFILES: SessionProfile[] = [
   "temporary",
@@ -38,10 +38,10 @@ export function HomeView() {
     setSession((current) => navigateSession(current, nextUrl));
   }
 
-  function saveCurrent() {
+  async function saveCurrent() {
     if (!session.currentUrl) return;
 
-    saveBookmark({
+    await saveBookmarkAsync({
       title: session.currentUrl.replace(/^https?:\/\//, ""),
       url: session.currentUrl,
       tags: [session.profile],
