@@ -450,3 +450,31 @@ button:disabled {
 .collection-card p {
   margin: 0.35rem 0 0;
 }
+
+.audit-list {
+  display: grid;
+}
+
+.audit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  border-top: 1px solid #24242a;
+  padding: 1rem 0;
+}
+
+.audit-row:first-child {
+  border-top: none;
+}
+
+.audit-row pre {
+  margin: 0.75rem 0 0;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid #24242a;
+  border-radius: 14px;
+  background: #09090b;
+  color: #d7d7dd;
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}

@@ -6,6 +6,7 @@ import { adultGateCopy } from "./features/safety/safety";
 import { HomeView } from "./features/home/HomeView";
 import { VaultView } from "./features/vault/VaultView";
 import { PrivacyView } from "./features/dashboard/PrivacyView";
+import { AuditView } from "./features/audit/AuditView";
 import { SettingsView } from "./features/settings/SettingsView";
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
         {activeView === "home" && <HomeView />}
         {activeView === "vault" && <VaultView />}
         {activeView === "privacy" && <PrivacyView />}
+        {activeView === "audit" && <AuditView />}
         {activeView === "settings" && <SettingsView />}
       </section>
     </main>
