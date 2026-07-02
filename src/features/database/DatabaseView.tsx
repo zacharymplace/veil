@@ -13,6 +13,9 @@ export function DatabaseView() {
   const [exportPath, setExportPath] = useState("");
   const [importText, setImportText] = useState("");
   const [importResult, setImportResult] = useState("");
+  const [passphrase, setPassphrase] = useState("");
+  const [encryptedExport, setEncryptedExport] = useState("");
+  const [readiness, setReadiness] = useState("");
 
   async function refreshStats() {
     setStats(await invoke<DatabaseStats>("db_stats"));
@@ -29,6 +32,25 @@ export function DatabaseView() {
   async function importJson() {
     const result = await invoke<Record<string, number>>("db_import_json", {
       raw: importText,
+    });
+
+    setImportResult(JSON.stringify(result, null, 2));
+    await refreshStats();
+  }
+
+  async function checkEncryptionReadiness() {
+    const result = await invoke<Record<string, unknown>>("db_encryption_readiness");
+    setReadiness(JSON.stringify(result, null, 2));
+  }
+
+  async function exportEncrypted() {
+    setEncryptedExport(await invoke<string>("db_export_encrypted", { passphrase }));
+  }
+
+  async function importEncrypted() {
+    const result = await invoke<Record<string, number>>("db_import_encrypted", {
+      encryptedJson: importText,
+      passphrase,
     });
 
     setImportResult(JSON.stringify(result, null, 2));
@@ -74,6 +96,29 @@ export function DatabaseView() {
             <span>JSON export</span>
           </div>
         </div>
+      </div>
+
+      <div className="card">
+        <h2>Encrypted Export / Import</h2>
+        <input
+          value={passphrase}
+          onChange={(event) => setPassphrase(event.target.value)}
+          placeholder="Passphrase, minimum 12 characters"
+          type="password"
+        />
+        <div className="row-actions">
+          <button className="ghost-button" onClick={checkEncryptionReadiness}>
+            SQLCipher Gate
+          </button>
+          <button onClick={exportEncrypted} disabled={passphrase.length < 12}>
+            Encrypted Export
+          </button>
+          <button onClick={importEncrypted} disabled={!importText.trim() || passphrase.length < 12}>
+            Encrypted Import
+          </button>
+        </div>
+        {readiness && <pre>{readiness}</pre>}
+        {encryptedExport && <pre>{encryptedExport}</pre>}
       </div>
 
       <div className="card">

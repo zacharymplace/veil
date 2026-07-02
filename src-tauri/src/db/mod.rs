@@ -374,3 +374,13 @@ mod tests {
         assert_eq!(wiped_audit, 0);
     }
 }
+
+pub fn encryption_readiness() -> serde_json::Value {
+    serde_json::json!({
+        "encryptedExport": true,
+        "sqlcipher": "planned",
+        "keychain": "planned",
+        "secureDelete": "planned",
+        "currentDatabaseEncryption": false
+    })
+}

@@ -17,7 +17,10 @@ pub fn run() {
             commands::db_stats,
             commands::db_export_json,
             commands::db_export_file,
-            commands::db_import_json
+            commands::db_import_json,
+            commands::encryption::db_encryption_readiness,
+            commands::encryption::db_export_encrypted,
+            commands::encryption::db_import_encrypted
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

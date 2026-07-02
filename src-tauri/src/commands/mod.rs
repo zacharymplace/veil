@@ -1,3 +1,5 @@
+pub mod encryption;
+
 use chrono::Utc;
 use tauri::AppHandle;
 use uuid::Uuid;
