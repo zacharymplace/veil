@@ -10,9 +10,10 @@
     "tauri": "tauri",
     "test:policy": "tsx src/app/__tests__/policySmoke.ts",
     "check:types": "tsc --noEmit",
-    "check": "npm run check:types && npm run test:policy && npm run test:rust && npm run test:core",
+    "check": "npm run check:types && npm run test:policy && npm run test:rust && npm run test:core && npm run test:browser-engine",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
-    "test:core": "tsx src/app/__tests__/coreSmoke.ts"
+    "test:core": "tsx src/app/__tests__/coreSmoke.ts",
+    "test:browser-engine": "tsx src/app/__tests__/browserEngineSmoke.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
