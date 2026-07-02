@@ -9,6 +9,7 @@ import { PrivacyView } from "./features/dashboard/PrivacyView";
 import { AuditView } from "./features/audit/AuditView";
 import { SettingsView } from "./features/settings/SettingsView";
 import { DatabaseView } from "./features/database/DatabaseView";
+import { CoreView } from "./features/core/CoreView";
 
 export default function App() {
   const [adultGateAccepted, setAdultGateAccepted] = useState(false);
@@ -46,6 +47,7 @@ export default function App() {
         {activeView === "privacy" && <PrivacyView />}
         {activeView === "audit" && <AuditView />}
         {activeView === "database" && <DatabaseView />}
+        {activeView === "core" && <CoreView />}
         {activeView === "settings" && <SettingsView />}
       </section>
     </main>
