@@ -90,3 +90,9 @@ pub fn db_export_json(app: AppHandle) -> Result<String, String> {
 pub fn db_export_file(app: AppHandle) -> Result<String, String> {
     db::export_database_to_file(&app)
 }
+
+
+#[tauri::command]
+pub fn db_import_json(app: AppHandle, raw: String) -> Result<serde_json::Value, String> {
+    db::import_database_json(&app, raw)
+}

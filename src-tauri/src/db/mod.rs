@@ -236,3 +236,63 @@ pub fn export_database_to_file(app: &AppHandle) -> Result<String, String> {
 
     Ok(path.to_string_lossy().to_string())
 }
+
+#[derive(Debug, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DatabaseImport {
+    bookmarks: Vec<VaultBookmark>,
+    audit_events: Vec<AuditEvent>,
+}
+
+pub fn import_database_json(app: &AppHandle, raw: String) -> Result<serde_json::Value, String> {
+    let parsed: DatabaseImport = serde_json::from_str(&raw).map_err(|error| error.to_string())?;
+    let conn = open(app)?;
+
+    let tx = conn.unchecked_transaction().map_err(|error| error.to_string())?;
+
+    for bookmark in &parsed.bookmarks {
+        tx.execute(
+            "
+            INSERT OR REPLACE INTO bookmarks (
+                id, title, url, tags_json, notes, collection_id, created_at, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+            ",
+            params![
+                bookmark.id,
+                bookmark.title,
+                bookmark.url,
+                serde_json::to_string(&bookmark.tags).map_err(|error| error.to_string())?,
+                bookmark.notes,
+                bookmark.collection_id,
+                bookmark.created_at,
+                bookmark.updated_at
+            ],
+        )
+        .map_err(|error| error.to_string())?;
+    }
+
+    for event in &parsed.audit_events {
+        tx.execute(
+            "
+            INSERT OR REPLACE INTO audit_events (
+                id, at, event_type, summary, metadata_json
+            ) VALUES (?1, ?2, ?3, ?4, ?5)
+            ",
+            params![
+                event.id,
+                event.at,
+                event.event_type,
+                event.summary,
+                event.metadata_json
+            ],
+        )
+        .map_err(|error| error.to_string())?;
+    }
+
+    tx.commit().map_err(|error| error.to_string())?;
+
+    Ok(serde_json::json!({
+        "importedBookmarks": parsed.bookmarks.len(),
+        "importedAuditEvents": parsed.audit_events.len()
+    }))
+}

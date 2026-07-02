@@ -11,6 +11,8 @@ export function DatabaseView() {
   const [stats, setStats] = useState<DatabaseStats | null>(null);
   const [exportText, setExportText] = useState("");
   const [exportPath, setExportPath] = useState("");
+  const [importText, setImportText] = useState("");
+  const [importResult, setImportResult] = useState("");
 
   async function refreshStats() {
     setStats(await invoke<DatabaseStats>("db_stats"));
@@ -22,6 +24,15 @@ export function DatabaseView() {
 
   async function exportFile() {
     setExportPath(await invoke<string>("db_export_file"));
+  }
+
+  async function importJson() {
+    const result = await invoke<Record<string, number>>("db_import_json", {
+      raw: importText,
+    });
+
+    setImportResult(JSON.stringify(result, null, 2));
+    await refreshStats();
   }
 
   return (
@@ -63,6 +74,19 @@ export function DatabaseView() {
             <span>JSON export</span>
           </div>
         </div>
+      </div>
+
+      <div className="card">
+        <h2>Import Backup JSON</h2>
+        <textarea
+          value={importText}
+          onChange={(event) => setImportText(event.target.value)}
+          placeholder="Paste Veil export JSON here"
+        />
+        <button onClick={importJson} disabled={!importText.trim()}>
+          Import into SQLite
+        </button>
+        {importResult && <pre>{importResult}</pre>}
       </div>
 
       {exportPath && (
