@@ -1,6 +1,6 @@
 use aes_gcm::{
     aead::{Aead, KeyInit},
-    Aes256Gcm, Nonce,
+    Aes256Gcm,
 };
 use rand::RngExt;
 use base64::{engine::general_purpose, Engine as _};
@@ -31,10 +31,10 @@ pub fn db_export_encrypted(app: tauri::AppHandle, passphrase: String) -> Result<
 
     let mut nonce_bytes = [0u8; 12];
     rand::rng().fill(&mut nonce_bytes);
-    let nonce = Nonce::from_slice(&nonce_bytes);
+    let nonce = aes_gcm::Nonce::try_from(&nonce_bytes[..]).map_err(|error| error.to_string())?;
 
     let ciphertext = cipher
-        .encrypt(nonce, plaintext.as_bytes())
+        .encrypt(&nonce, plaintext.as_bytes())
         .map_err(|error| error.to_string())?;
 
     Ok(serde_json::json!({
@@ -85,10 +85,10 @@ pub fn db_import_encrypted(
     }
 
     let cipher = Aes256Gcm::new_from_slice(&key_bytes).map_err(|error| error.to_string())?;
-    let nonce = Nonce::from_slice(&nonce_bytes);
+    let nonce = aes_gcm::Nonce::try_from(&nonce_bytes[..]).map_err(|error| error.to_string())?;
 
     let plaintext = cipher
-        .decrypt(nonce, ciphertext.as_ref())
+        .decrypt(&nonce, ciphertext.as_ref())
         .map_err(|_| "Could not decrypt export with supplied passphrase.".to_string())?;
 
     let raw = String::from_utf8(plaintext).map_err(|error| error.to_string())?;
