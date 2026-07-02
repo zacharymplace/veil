@@ -296,3 +296,81 @@ pub fn import_database_json(app: &AppHandle, raw: String) -> Result<serde_json::
         "importedAuditEvents": parsed.audit_events.len()
     }))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::Connection;
+
+    fn migrate_test(conn: &Connection) {
+        migrate(conn).expect("migration should pass");
+    }
+
+    #[test]
+    fn sqlite_export_import_roundtrip_contract() {
+        let conn = Connection::open_in_memory().expect("in-memory sqlite should open");
+        migrate_test(&conn);
+
+        conn.execute(
+            "
+            INSERT INTO bookmarks (
+                id, title, url, tags_json, notes, collection_id, created_at, updated_at
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+            ",
+            params![
+                "bookmark-1",
+                "Example",
+                "https://example.com",
+                "[\"test\"]",
+                "contract bookmark",
+                Option::<String>::None,
+                "2026-01-01T00:00:00Z",
+                "2026-01-01T00:00:00Z"
+            ],
+        )
+        .expect("bookmark insert should pass");
+
+        conn.execute(
+            "
+            INSERT INTO audit_events (
+                id, at, event_type, summary, metadata_json
+            ) VALUES (?1, ?2, ?3, ?4, ?5)
+            ",
+            params![
+                "audit-1",
+                "2026-01-01T00:00:00Z",
+                "contract.test",
+                "Contract event",
+                "{\"source\":\"test\"}"
+            ],
+        )
+        .expect("audit insert should pass");
+
+        let bookmarks_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM bookmarks", [], |row| row.get(0))
+            .expect("bookmark count should pass");
+
+        let audit_count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM audit_events", [], |row| row.get(0))
+            .expect("audit count should pass");
+
+        assert_eq!(bookmarks_count, 1);
+        assert_eq!(audit_count, 1);
+
+        conn.execute("DELETE FROM bookmarks", [])
+            .expect("bookmark wipe should pass");
+        conn.execute("DELETE FROM audit_events", [])
+            .expect("audit wipe should pass");
+
+        let wiped_bookmarks: i64 = conn
+            .query_row("SELECT COUNT(*) FROM bookmarks", [], |row| row.get(0))
+            .expect("bookmark recount should pass");
+
+        let wiped_audit: i64 = conn
+            .query_row("SELECT COUNT(*) FROM audit_events", [], |row| row.get(0))
+            .expect("audit recount should pass");
+
+        assert_eq!(wiped_bookmarks, 0);
+        assert_eq!(wiped_audit, 0);
+    }
+}
