@@ -51,7 +51,7 @@ export function BrowserEngineView() {
   }
 
   function checkDownload() {
-    browserEngineCheckDownload(downloadUrl || "https://example.com/file.zip");
+    browserEngineCheckDownload(session, downloadUrl || "https://example.com/file.zip");
     setVersion((current) => current + 1);
   }
 

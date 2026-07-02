@@ -14,8 +14,8 @@ const nextSession = browserEngineNavigate(session, "example.com");
 
 assert(nextSession.currentUrl === "https://example.com", "navigation should normalize HTTPS URL");
 
-const download = browserEngineCheckDownload("https://example.com/file.zip");
-assert(download.action === "block", "downloads should be blocked");
+const download = browserEngineCheckDownload(nextSession, "https://example.com/file.zip");
+assert(download.status === "blocked", "downloads should be blocked");
 
 const camera = browserEngineRequestPermission(nextSession, "camera");
 assert(camera.status === "prompt", "camera permission should prompt");

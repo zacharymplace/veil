@@ -1,7 +1,7 @@
 import { prepareNavigation } from "../navigation/navigationManager";
 import { type BrowserPermission } from "../permissions/permissionManager";
 import { evaluatePermissionForSession, listPermissionRecords } from "../permissions/registry/permissionRegistry";
-import { canDownload } from "../downloads/downloadPolicy";
+import { evaluateDownloadForSession, listDownloadRecords } from "../downloads/registry/downloadRegistry";
 import {
   createBrowserSession,
   navigateSession,
@@ -61,16 +61,8 @@ export function browserEngineRequestPermission(
   return evaluatePermissionForSession(session, permission);
 }
 
-export function browserEngineCheckDownload(url: string) {
-  const decision = canDownload(url);
-
-  appendAuditEvent({
-    type: "browser.download",
-    summary: `Download ${decision.action}.`,
-    metadata: { url, decision },
-  });
-
-  return decision;
+export function browserEngineCheckDownload(session: BrowserSession, url: string) {
+  return evaluateDownloadForSession(session, url);
 }
 
 export function browserEngineCleanup(session: BrowserSession): void {
@@ -95,4 +87,9 @@ export function browserEngineIsolationScopes() {
 
 export function browserEnginePermissionRecords() {
   return listPermissionRecords();
+}
+
+
+export function browserEngineDownloadRecords() {
+  return listDownloadRecords();
 }
