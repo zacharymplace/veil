@@ -140,7 +140,7 @@ export function HomeView() {
           <div className="mini-grid">
             <span>Bookmarks: {vault.bookmarks}</span>
             <span>Collections: {vault.collections}</span>
-            <span>Storage: {vault.storageMode}</span>
+            <span>Storage: SQLite</span>
             <span>Encryption: planned</span>
           </div>
         </div>

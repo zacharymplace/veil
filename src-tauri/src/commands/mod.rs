@@ -2,14 +2,12 @@ use chrono::Utc;
 use tauri::AppHandle;
 use uuid::Uuid;
 
-use crate::storage::{
-    audit::{read_audit_events, write_audit_events, AuditEvent},
-    read_bookmarks, write_bookmarks, VaultBookmark,
-};
+use crate::db;
+use crate::storage::{audit::AuditEvent, VaultBookmark};
 
 #[tauri::command]
 pub fn vault_list_bookmarks(app: AppHandle) -> Result<Vec<VaultBookmark>, String> {
-    read_bookmarks(&app)
+    db::list_bookmarks(&app)
 }
 
 #[tauri::command]
@@ -34,31 +32,23 @@ pub fn vault_save_bookmark(
         updated_at: now,
     };
 
-    let mut bookmarks = read_bookmarks(&app)?;
-    bookmarks.insert(0, bookmark.clone());
-    write_bookmarks(&app, &bookmarks)?;
-
+    db::insert_bookmark(&app, &bookmark)?;
     Ok(bookmark)
 }
 
 #[tauri::command]
 pub fn vault_remove_bookmark(app: AppHandle, id: String) -> Result<(), String> {
-    let bookmarks = read_bookmarks(&app)?
-        .into_iter()
-        .filter(|bookmark| bookmark.id != id)
-        .collect::<Vec<_>>();
-
-    write_bookmarks(&app, &bookmarks)
+    db::delete_bookmark(&app, &id)
 }
 
 #[tauri::command]
 pub fn vault_wipe_bookmarks(app: AppHandle) -> Result<(), String> {
-    write_bookmarks(&app, &[])
+    db::wipe_bookmarks(&app)
 }
 
 #[tauri::command]
 pub fn audit_list_events(app: AppHandle) -> Result<Vec<AuditEvent>, String> {
-    read_audit_events(&app)
+    db::list_audit_events(&app)
 }
 
 #[tauri::command]
@@ -76,15 +66,11 @@ pub fn audit_append_event(
         metadata_json,
     };
 
-    let mut events = read_audit_events(&app)?;
-    events.insert(0, event.clone());
-    events.truncate(500);
-    write_audit_events(&app, &events)?;
-
+    db::insert_audit_event(&app, &event)?;
     Ok(event)
 }
 
 #[tauri::command]
 pub fn audit_clear_events(app: AppHandle) -> Result<(), String> {
-    write_audit_events(&app, &[])
+    db::clear_audit_events(&app)
 }

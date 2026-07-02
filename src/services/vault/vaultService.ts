@@ -10,6 +10,6 @@ export function vaultSummary() {
     bookmarks: bookmarks.length,
     collections: COLLECTIONS.length,
     encrypted: false,
-    storageMode: "localStorage prototype",
+    storageMode: "SQLite",
   };
 }

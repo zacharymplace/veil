@@ -55,7 +55,7 @@ export function VaultView() {
       <div className="view-header">
         <div>
           <h1>Vault</h1>
-          <p>Rust-backed bookmark persistence prototype.</p>
+          <p>SQLite-backed bookmark persistence prototype.</p>
         </div>
         <button className="danger-button" onClick={wipeAll}>Wipe vault</button>
       </div>
@@ -72,8 +72,8 @@ export function VaultView() {
         <div className="card">
           <h2>Storage</h2>
           <div className="mini-grid">
-            <span>Backend: Rust command</span>
-            <span>Format: local JSON</span>
+            <span>Backend: SQLite</span>
+            <span>Format: veil.sqlite3</span>
             <span>Encryption: planned</span>
             <span>Items: {bookmarks.length}</span>
           </div>
