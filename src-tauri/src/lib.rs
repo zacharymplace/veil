@@ -15,7 +15,8 @@ pub fn run() {
             commands::audit_append_event,
             commands::audit_clear_events,
             commands::db_stats,
-            commands::db_export_json
+            commands::db_export_json,
+            commands::db_export_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

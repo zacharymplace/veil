@@ -10,6 +10,7 @@ type DatabaseStats = {
 export function DatabaseView() {
   const [stats, setStats] = useState<DatabaseStats | null>(null);
   const [exportText, setExportText] = useState("");
+  const [exportPath, setExportPath] = useState("");
 
   async function refreshStats() {
     setStats(await invoke<DatabaseStats>("db_stats"));
@@ -17,6 +18,10 @@ export function DatabaseView() {
 
   async function exportJson() {
     setExportText(await invoke<string>("db_export_json"));
+  }
+
+  async function exportFile() {
+    setExportPath(await invoke<string>("db_export_file"));
   }
 
   return (
@@ -29,7 +34,8 @@ export function DatabaseView() {
 
         <div className="row-actions">
           <button className="ghost-button" onClick={refreshStats}>Refresh</button>
-          <button onClick={exportJson}>Export JSON</button>
+          <button className="ghost-button" onClick={exportJson}>Preview JSON</button>
+          <button onClick={exportFile}>Export File</button>
         </div>
       </div>
 
@@ -58,6 +64,13 @@ export function DatabaseView() {
           </div>
         </div>
       </div>
+
+      {exportPath && (
+        <div className="card">
+          <h2>Export File</h2>
+          <p className="muted">{exportPath}</p>
+        </div>
+      )}
 
       {exportText && (
         <div className="card">

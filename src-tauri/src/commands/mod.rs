@@ -84,3 +84,9 @@ pub fn db_stats(app: AppHandle) -> Result<serde_json::Value, String> {
 pub fn db_export_json(app: AppHandle) -> Result<String, String> {
     db::export_database(&app)
 }
+
+
+#[tauri::command]
+pub fn db_export_file(app: AppHandle) -> Result<String, String> {
+    db::export_database_to_file(&app)
+}

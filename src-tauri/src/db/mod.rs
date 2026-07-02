@@ -217,3 +217,22 @@ pub fn export_database(app: &AppHandle) -> Result<String, String> {
 
     Ok(serde_json::to_string_pretty(&export).map_err(|error| error.to_string())?)
 }
+
+pub fn export_database_to_file(app: &AppHandle) -> Result<String, String> {
+    let export = export_database(app)?;
+
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| error.to_string())?
+        .join("exports");
+
+    std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
+
+    let filename = format!("veil-export-{}.json", chrono::Utc::now().format("%Y%m%dT%H%M%SZ"));
+    let path = dir.join(filename);
+
+    std::fs::write(&path, export).map_err(|error| error.to_string())?;
+
+    Ok(path.to_string_lossy().to_string())
+}
