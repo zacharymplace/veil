@@ -205,8 +205,6 @@ pub fn database_stats(app: &AppHandle) -> Result<serde_json::Value, String> {
 }
 
 pub fn export_database(app: &AppHandle) -> Result<String, String> {
-    let conn = open(app)?;
-
     let bookmarks = list_bookmarks(app)?;
     let audit_events = list_audit_events(app)?;
 
