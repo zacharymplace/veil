@@ -8,6 +8,7 @@ import { VaultView } from "./features/vault/VaultView";
 import { PrivacyView } from "./features/dashboard/PrivacyView";
 import { AuditView } from "./features/audit/AuditView";
 import { SettingsView } from "./features/settings/SettingsView";
+import { DatabaseView } from "./features/database/DatabaseView";
 
 export default function App() {
   const [adultGateAccepted, setAdultGateAccepted] = useState(false);
@@ -44,6 +45,7 @@ export default function App() {
         {activeView === "vault" && <VaultView />}
         {activeView === "privacy" && <PrivacyView />}
         {activeView === "audit" && <AuditView />}
+        {activeView === "database" && <DatabaseView />}
         {activeView === "settings" && <SettingsView />}
       </section>
     </main>

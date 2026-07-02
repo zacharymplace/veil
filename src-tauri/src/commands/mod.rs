@@ -74,3 +74,13 @@ pub fn audit_append_event(
 pub fn audit_clear_events(app: AppHandle) -> Result<(), String> {
     db::clear_audit_events(&app)
 }
+
+#[tauri::command]
+pub fn db_stats(app: AppHandle) -> Result<serde_json::Value, String> {
+    db::database_stats(&app)
+}
+
+#[tauri::command]
+pub fn db_export_json(app: AppHandle) -> Result<String, String> {
+    db::export_database(&app)
+}

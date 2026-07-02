@@ -185,3 +185,37 @@ pub fn clear_audit_events(app: &AppHandle) -> Result<(), String> {
         .map_err(|error| error.to_string())?;
     Ok(())
 }
+
+pub fn database_stats(app: &AppHandle) -> Result<serde_json::Value, String> {
+    let conn = open(app)?;
+
+    let bookmarks: i64 = conn
+        .query_row("SELECT COUNT(*) FROM bookmarks", [], |row| row.get(0))
+        .map_err(|error| error.to_string())?;
+
+    let audit_events: i64 = conn
+        .query_row("SELECT COUNT(*) FROM audit_events", [], |row| row.get(0))
+        .map_err(|error| error.to_string())?;
+
+    Ok(serde_json::json!({
+        "database": "veil.sqlite3",
+        "bookmarks": bookmarks,
+        "auditEvents": audit_events
+    }))
+}
+
+pub fn export_database(app: &AppHandle) -> Result<String, String> {
+    let conn = open(app)?;
+
+    let bookmarks = list_bookmarks(app)?;
+    let audit_events = list_audit_events(app)?;
+
+    let export = serde_json::json!({
+        "exportedAt": chrono::Utc::now().to_rfc3339(),
+        "database": "veil.sqlite3",
+        "bookmarks": bookmarks,
+        "auditEvents": audit_events
+    });
+
+    Ok(serde_json::to_string_pretty(&export).map_err(|error| error.to_string())?)
+}

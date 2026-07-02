@@ -13,7 +13,9 @@ pub fn run() {
             commands::vault_wipe_bookmarks,
             commands::audit_list_events,
             commands::audit_append_event,
-            commands::audit_clear_events
+            commands::audit_clear_events,
+            commands::db_stats,
+            commands::db_export_json
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
