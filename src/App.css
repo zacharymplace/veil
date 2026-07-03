@@ -496,3 +496,18 @@ textarea {
 textarea:focus {
   border-color: #8f96ff;
 }
+
+.webview-frame {
+  width: 100%;
+  min-height: 520px;
+  border: 1px solid #27272a;
+  border-radius: 16px;
+  background: #09090b;
+}
+
+.empty-state {
+  border: 1px solid #27272a;
+  border-radius: 16px;
+  padding: 24px;
+  color: #a1a1aa;
+}
