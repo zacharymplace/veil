@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createBrowserEngineSession } from "../../browser/engine/browserEngineV05";
 import {
   bindLiveWebViewNavigation,
@@ -16,6 +16,12 @@ export function LiveWebViewBindingView() {
   const [decisions, setDecisions] = useState<WebViewDecisionLogEntry[]>([]);
 
   const binding = bindLiveWebViewNavigation(session, url);
+
+  useEffect(() => {
+    setDecisions((current) =>
+      current.length === 0 ? appendWebViewDecision(current, binding) : current
+    );
+  }, []);
 
   function openRequestedUrl() {
     const nextBinding = bindLiveWebViewNavigation(session, input);
@@ -74,11 +80,17 @@ export function LiveWebViewBindingView() {
               <div className="audit-row" key={decision.id}>
                 <strong>{decision.status} · {decision.requestedUrl}</strong>
                 <span>{decision.reason}</span>
-                <pre>{JSON.stringify({
-                  targetUrl: decision.targetUrl,
-                  downloadsAllowed: decision.downloadsAllowed,
-                  sandboxActive: decision.sandboxActive,
-                }, null, 2)}</pre>
+                <pre>
+                  {JSON.stringify(
+                    {
+                      targetUrl: decision.targetUrl,
+                      downloadsAllowed: decision.downloadsAllowed,
+                      sandboxActive: decision.sandboxActive,
+                    },
+                    null,
+                    2
+                  )}
+                </pre>
               </div>
             ))}
           </div>
