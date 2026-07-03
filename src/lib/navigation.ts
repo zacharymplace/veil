@@ -1,7 +1,20 @@
-export type View = "home" | "webview" | "browserEngine" | "sessionIsolation" | "permissions" | "downloads" | "vault" | "privacy" | "audit" | "database" | "core" | "settings";
+export type View =
+  | "home"
+  | "webview"
+  | "browserEngine"
+  | "sessionIsolation"
+  | "permissions"
+  | "downloads"
+  | "vault"
+  | "privacy"
+  | "audit"
+  | "database"
+  | "core"
+  | "settings";
 
 export const NAV_ITEMS: { id: View; label: string; icon: string }[] = [
   { id: "home", label: "Browser", icon: "◌" },
+  { id: "webview", label: "WebView", icon: "◉" },
   { id: "browserEngine", label: "Engine", icon: "◉" },
   { id: "sessionIsolation", label: "Isolation", icon: "⬚" },
   { id: "permissions", label: "Permissions", icon: "◫" },
