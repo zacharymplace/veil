@@ -10,7 +10,7 @@
     "tauri": "tauri",
     "test:policy": "tsx src/app/__tests__/policySmoke.ts",
     "check:types": "tsc --noEmit",
-    "check": "npm run check:types && npm run test:policy && npm run test:rust && npm run test:core && npm run test:browser-engine && npm run test:session-isolation && npm run test:permissions && npm run test:downloads && npm run test:audit-console && npm run test:webview-contract && npm run test:live-webview-binding && npm run test:live-webview-nav",
+    "check": "npm run check:types && npm run test:policy && npm run test:rust && npm run test:core && npm run test:browser-engine && npm run test:session-isolation && npm run test:permissions && npm run test:downloads && npm run test:audit-console && npm run test:webview-contract && npm run test:live-webview-binding && npm run test:live-webview-nav && npm run test:webview-decision-log && npm run test:webview-policy-badges",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "test:core": "tsx src/app/__tests__/coreSmoke.ts",
     "test:browser-engine": "tsx src/app/__tests__/browserEngineSmoke.ts",
@@ -20,7 +20,9 @@
     "test:audit-console": "tsx src/app/__tests__/auditConsoleSmoke.ts",
     "test:webview-contract": "tsx src/app/__tests__/webViewContractSmoke.ts",
     "test:live-webview-binding": "tsx src/app/__tests__/liveWebViewBindingSmoke.ts",
-    "test:live-webview-nav": "tsx src/app/__tests__/liveWebViewNavSmoke.ts"
+    "test:live-webview-nav": "tsx src/app/__tests__/liveWebViewNavSmoke.ts",
+    "test:webview-decision-log": "tsx src/app/__tests__/webViewDecisionLogSmoke.ts",
+    "test:webview-policy-badges": "tsx src/app/__tests__/webViewPolicyBadgesSmoke.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
