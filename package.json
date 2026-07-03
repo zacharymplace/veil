@@ -10,14 +10,15 @@
     "tauri": "tauri",
     "test:policy": "tsx src/app/__tests__/policySmoke.ts",
     "check:types": "tsc --noEmit",
-    "check": "npm run check:types && npm run test:policy && npm run test:rust && npm run test:core && npm run test:browser-engine && npm run test:session-isolation && npm run test:permissions && npm run test:downloads && npm run test:audit-console",
+    "check": "npm run check:types && npm run test:policy && npm run test:rust && npm run test:core && npm run test:browser-engine && npm run test:session-isolation && npm run test:permissions && npm run test:downloads && npm run test:audit-console && npm run test:webview-contract",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "test:core": "tsx src/app/__tests__/coreSmoke.ts",
     "test:browser-engine": "tsx src/app/__tests__/browserEngineSmoke.ts",
     "test:session-isolation": "tsx src/app/__tests__/sessionIsolationSmoke.ts",
     "test:permissions": "tsx src/app/__tests__/permissionManagerSmoke.ts",
     "test:downloads": "tsx src/app/__tests__/downloadGuardSmoke.ts",
-    "test:audit-console": "tsx src/app/__tests__/auditConsoleSmoke.ts"
+    "test:audit-console": "tsx src/app/__tests__/auditConsoleSmoke.ts",
+    "test:webview-contract": "tsx src/app/__tests__/webViewContractSmoke.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
