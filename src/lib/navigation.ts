@@ -1,4 +1,4 @@
-export type View = "home" | "browserEngine" | "sessionIsolation" | "permissions" | "downloads" | "vault" | "privacy" | "audit" | "database" | "core" | "settings";
+export type View = "home" | "webview" | "browserEngine" | "sessionIsolation" | "permissions" | "downloads" | "vault" | "privacy" | "audit" | "database" | "core" | "settings";
 
 export const NAV_ITEMS: { id: View; label: string; icon: string }[] = [
   { id: "home", label: "Browser", icon: "◌" },

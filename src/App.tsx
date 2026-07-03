@@ -14,6 +14,7 @@ import { BrowserEngineView } from "./features/browserEngine/BrowserEngineView";
 import { SessionIsolationView } from "./features/sessionIsolation/SessionIsolationView";
 import { PermissionsView } from "./features/permissions/PermissionsView";
 import { DownloadGuardView } from "./features/downloads/DownloadGuardView";
+import { LiveWebViewBindingView } from "./features/webview/LiveWebViewBindingView";
 
 export default function App() {
   const [adultGateAccepted, setAdultGateAccepted] = useState(false);
@@ -47,6 +48,7 @@ export default function App() {
 
       <section className="content-shell">
         {activeView === "home" && <HomeView />}
+        {activeView === "webview" && <LiveWebViewBindingView />}
         {activeView === "browserEngine" && <BrowserEngineView />}
         {activeView === "sessionIsolation" && <SessionIsolationView />}
         {activeView === "permissions" && <PermissionsView />}
