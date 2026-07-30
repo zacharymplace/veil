@@ -2,8 +2,8 @@ use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm,
 };
-use rand::RngExt;
 use base64::{engine::general_purpose, Engine as _};
+use rand::RngExt;
 
 use crate::db;
 

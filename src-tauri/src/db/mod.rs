@@ -229,7 +229,10 @@ pub fn export_database_to_file(app: &AppHandle) -> Result<String, String> {
 
     std::fs::create_dir_all(&dir).map_err(|error| error.to_string())?;
 
-    let filename = format!("veil-export-{}.json", chrono::Utc::now().format("%Y%m%dT%H%M%SZ"));
+    let filename = format!(
+        "veil-export-{}.json",
+        chrono::Utc::now().format("%Y%m%dT%H%M%SZ")
+    );
     let path = dir.join(filename);
 
     std::fs::write(&path, export).map_err(|error| error.to_string())?;
@@ -248,7 +251,9 @@ pub fn import_database_json(app: &AppHandle, raw: String) -> Result<serde_json::
     let parsed: DatabaseImport = serde_json::from_str(&raw).map_err(|error| error.to_string())?;
     let conn = open(app)?;
 
-    let tx = conn.unchecked_transaction().map_err(|error| error.to_string())?;
+    let tx = conn
+        .unchecked_transaction()
+        .map_err(|error| error.to_string())?;
 
     for bookmark in &parsed.bookmarks {
         tx.execute(
