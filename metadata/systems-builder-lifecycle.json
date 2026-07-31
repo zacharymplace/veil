@@ -2,12 +2,12 @@
   "schema_version": "systems-builder-lifecycle-v1",
   "system_id": "veil",
   "display_name": "Veil",
-  "phase": "validate",
+  "phase": "promote",
   "condition": "passing",
   "source": {
     "repository": "zacharymplace/veil",
     "path": ".",
-    "commit": "625f6ce"
+    "commit": "3e44139"
   },
   "evidence": [
     {
@@ -59,12 +59,17 @@
       "kind": "observation",
       "reference": "docs/operator-notes/WEBVIEW_POLICY_BADGES_UI_SMOKE.md",
       "result": "informational"
+    },
+    {
+      "kind": "validation",
+      "reference": "docs/operator-notes/validation/packaged-webview-validation.json",
+      "result": "pass"
     }
   ],
-  "last_verified_at": "2026-07-31T00:38:48Z",
+  "last_verified_at": "2026-07-31T21:55:48.580207Z",
   "next_action": {
-    "description": "Run the documented manual live WebView smoke and record whether HTTPS-only navigation, sandboxing, blocked downloads, policy badges, and decision logging hold in the packaged desktop application.",
-    "command": "npm run check && npm run build && cargo test --manifest-path src-tauri/Cargo.toml"
+    "description": "Preserve the passing packaged WebView validation and defer further work until a specific validated need or regression appears.",
+    "command": "npm run validate:packaged-webview"
   },
   "blockers": [],
   "capabilities": [
@@ -78,8 +83,8 @@
     "policy-badges",
     "live-webview-binding"
   ],
-  "summary": "Privacy-focused Tauri browser shell with passing TypeScript, policy, Rust, production build, session isolation, permission, download, audit, WebView contract, and live WebView binding validation.",
-  "current_objective": "Validate the live WebView privacy boundary through bounded manual use without expanding architecture.",
+  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging.",
+  "current_objective": "Preserve the validated packaged WebView privacy boundary without expanding architecture.",
   "constraints": [
     "Do not add a new browser subsystem during validation.",
     "Do not weaken download blocking or permission prompting.",

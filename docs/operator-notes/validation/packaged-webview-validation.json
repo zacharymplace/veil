@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.1.0",
+  "kind": "veil.packaged_webview_validation",
+  "source_commit": "3e44139",
+  "validated_at": "2026-07-31T21:55:48.580207Z",
+  "platform": "macOS",
+  "surface": "packaged Tauri desktop application",
+  "checks": {
+    "packaged_app_launches": true,
+    "adult_gate_renders": true,
+    "browser_surface_renders": true,
+    "webview_navigation_visible": true,
+    "https_navigation_renders": true,
+    "http_navigation_blocked": true,
+    "sandbox_badge_active": true,
+    "downloads_badge_blocked": true,
+    "policy_reason_visible": true,
+    "decision_log_records_allowed_navigation": true,
+    "decision_log_records_blocked_navigation": true,
+    "no_crash_or_blank_webview": true
+  },
+  "findings": [
+    {
+      "severity": "non_blocking",
+      "area": "WebView decision log",
+      "finding": "The initial HTTPS-ready decision may appear multiple times during render or refresh.",
+      "recommended_change": "Deduplicate equivalent initial decisions in a later bounded observability refinement."
+    }
+  ],
+  "decision": "pass",
+  "decision_reason": "The packaged macOS application launches successfully, renders the WebView surface, allows HTTPS navigation, blocks HTTP navigation, keeps downloads disabled, preserves sandboxing, exposes policy reasons, and records both allowed and blocked decisions.",
+  "validated_by": "human_operator"
+}

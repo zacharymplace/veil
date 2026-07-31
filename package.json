@@ -22,7 +22,8 @@
     "test:live-webview-binding": "tsx src/app/__tests__/liveWebViewBindingSmoke.ts",
     "test:live-webview-nav": "tsx src/app/__tests__/liveWebViewNavSmoke.ts",
     "test:webview-decision-log": "tsx src/app/__tests__/webViewDecisionLogSmoke.ts",
-    "test:webview-policy-badges": "tsx src/app/__tests__/webViewPolicyBadgesSmoke.ts"
+    "test:webview-policy-badges": "tsx src/app/__tests__/webViewPolicyBadgesSmoke.ts",
+    "validate:packaged-webview": "node tests/validate-packaged-webview-validation.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
