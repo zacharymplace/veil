@@ -7,7 +7,7 @@
   "source": {
     "repository": "zacharymplace/veil",
     "path": ".",
-    "commit": "d848830"
+    "commit": "46e49e2"
   },
   "evidence": [
     {
@@ -87,11 +87,22 @@
       "reference": "docs/operator-notes/validation/packaged-webview-validation.json",
       "result": "pass",
       "note": "Re-run against commit 5af8ddf on 2026-08-17 by a human operator using the actual packaged .app (not the dev server). Confirmed real page content renders for HTTPS navigation (Wikipedia) and HTTP navigation is blocked with a visible reason. Two non-blocking findings recorded: Google's own anti-framing headers produce a blank content area (not a Veil defect), and the decision log still has a known, unfixed duplicate-entry issue carried over from the prior validation pass."
+    },
+    {
+      "kind": "release",
+      "reference": "docs/releases/NATIVE_WEBVIEW_MIGRATION.md",
+      "result": "informational"
+    },
+    {
+      "kind": "validation",
+      "reference": "manual packaged-app test of native WebView download/navigation/new-window enforcement",
+      "result": "pass",
+      "note": "2026-08-17. User-directed architecture change (explicit scope agreed in advance: webview + downloads + navigation, not session isolation, not permission integration). A real download (GitHub release .zip, forces Content-Disposition: attachment) was blocked and recorded in Audit. A window.open()-style request initially bypassed both on_navigation and on_download entirely (wry's default behavior) until on_new_window was added to deny it. Positioning verified correct at default window size and after resize/maximize. Known, documented limitation: content a site renders inline instead of forcing a download (e.g. Wikipedia's PDF export, via WebKit's built-in PDF viewer) is not caught, since on_navigation only checks URL scheme, not response content type -- confirmed no fix is possible with Tauri's current public API (on_web_resource_request is documented as tauri-protocol-only, not applicable to external URLs)."
     }
   ],
-  "last_verified_at": "2026-08-17T16:45:14Z",
+  "last_verified_at": "2026-08-17T17:58:14Z",
   "next_action": {
-    "description": "No specific outstanding action. All of v1.1_PLAN.md's candidate scope is now done except the WebView permission/download callback integration item, which remains genuinely blocked on the same underlying gap as session-storage isolation (see docs/recommendations/SESSION_STORAGE_ISOLATION_SCOPE.md) -- the live WebView is a plain iframe with no camera/mic/download grants to callback-integrate, and fixing that requires the native-child-webview architecture change scoped there, which is new-subsystem work this project's own posture holds off on absent a validated need. The 'WebView Decision Log' duplicate-entries observation from the 2026-08-17 packaged revalidation remains unconfirmed as a real defect.",
+    "description": "No specific outstanding action. The live WebView is now a real native child webview (user-directed, scope agreed in advance) with genuine download and navigation enforcement in Rust. Two things remain open by design, not oversight: (1) permission-callback integration (camera/mic) is blocked on tauri not yet wrapping wry 0.56's permission-request API; (2) inline-rendered non-HTML content (e.g. PDF exports) isn't caught by download blocking, and no fix is possible with Tauri's current public API for external URLs. Both re-check when Tauri ships the relevant API rather than being worked around. The 'WebView Decision Log' duplicate-entries observation from the 2026-08-17 packaged revalidation remains separately unconfirmed as a real defect.",
     "command": "npm run check"
   },
   "blockers": [],
@@ -109,16 +120,21 @@
     "persisted-permission-registry",
     "persisted-download-registry",
     "sqlcipher-at-rest-encryption",
-    "os-keychain-key-storage"
+    "os-keychain-key-storage",
+    "native-child-webview",
+    "native-download-enforcement",
+    "native-navigation-enforcement",
+    "native-new-window-denial"
   ],
-  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging. This cycle fixed several silent-failure and correctness bugs (unhandled Tauri command errors, an isolation-scope cleanup leak, a disconnected vault bookmark count), corrected UI/audit-log claims that overstated session isolation as real per-profile cookie/storage separation — it is currently TypeScript-layer bookkeeping only, since the app runs a single shared WebView — replaced the encrypted-export passphrase key derivation with salted Argon2id (was an unsalted XOR-fold that left most key bytes at zero for short passphrases), moved the permission and download decision registries from in-memory-only to SQLite persistence, and added SQLCipher at-rest encryption for the live database with the key stored in the OS keychain (existing unencrypted databases get a clean-slate reset, not an in-place migration -- see docs/recommendations/SQLCIPHER_KEYCHAIN_SCOPE.md for why).",
-  "current_objective": "Keep the validated packaged WebView privacy boundary honest: fix concrete bugs and false claims as found, without adding new browser subsystems or capability scope.",
+  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging. This cycle fixed several silent-failure and correctness bugs (unhandled Tauri command errors, an isolation-scope cleanup leak, a disconnected vault bookmark count), corrected UI/audit-log claims that overstated session isolation as real per-profile cookie/storage separation, replaced the encrypted-export passphrase key derivation with salted Argon2id, moved the permission and download decision registries from in-memory-only to SQLite persistence, added SQLCipher at-rest encryption for the live database with the key stored in the OS keychain, and -- at the user's explicit direction, with scope agreed in advance -- migrated the live WebView from an iframe to a real native child webview with genuine Rust-enforced download and navigation policy. Session isolation (cookies/storage) is still TypeScript-layer bookkeeping only; permission-callback integration and inline-content-type download detection remain blocked on gaps in Tauri's current public API, not oversight.",
+  "current_objective": "Keep the validated packaged WebView privacy boundary honest: fix concrete bugs and false claims as found. Architecture expansion happens only at explicit user direction with scope agreed in advance, not proactively.",
   "known_gaps": [
-    "Session isolation (per-profile cookies/localStorage/IndexedDB) is not implemented at the WebView/storage level — there is one shared Tauri window/WebView, so all profiles currently share the same browser storage. Tracked honestly in src/app/threatModel.ts under doesNotProtectAgainst.",
-    "WebView permission/download callback integration is not implemented -- the live WebView is a plain iframe with no camera/mic/download grants for policy to callback-integrate with. Blocked on the same native-webview architecture gap as session isolation."
+    "Session isolation (per-profile cookies/localStorage/IndexedDB) is not implemented at the WebView/storage level — there is one shared Tauri window/WebView, so all profiles currently share the same browser storage. Tracked honestly in src/app/threatModel.ts under doesNotProtectAgainst. Scoped in docs/recommendations/SESSION_STORAGE_ISOLATION_SCOPE.md; not started.",
+    "Permission-callback integration (camera/mic/geolocation) is not implemented -- wry 0.56.0 added the underlying PermissionKind/PermissionResponse API, but tauri (pinned and latest-published at 2.11.5) hasn't wrapped it in WebviewBuilder yet.",
+    "Content a site renders inline instead of forcing a download (e.g. a PDF export handled by the WebView's built-in viewer) is not caught by download blocking -- on_navigation only checks URL scheme, not response content type, and Tauri's on_web_resource_request is documented as tauri-protocol-only, not applicable to external URLs. No fix possible with the current public API."
   ],
   "constraints": [
-    "Do not add a new browser subsystem during validation.",
+    "Do not add a new browser subsystem or expand architecture proactively -- only at explicit user direction, with scope agreed in advance (see the 2026-08-17 native WebView migration for the pattern: user asked to resolve a specific blocked item, scope was confirmed via options before implementation started).",
     "Do not weaken download blocking or permission prompting.",
     "Do not treat smoke tests as proof of packaged desktop behavior.",
     "Manual validation must use bounded, non-sensitive test URLs and content.",
