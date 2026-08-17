@@ -61,13 +61,20 @@ export function LiveWebViewBindingView() {
       <p className="policy-reason">{binding.reason}</p>
 
       {binding.targetUrl ? (
-        <iframe
-          title="Veil live WebView binding"
-          src={binding.targetUrl}
-          sandbox={binding.sandbox}
-          referrerPolicy="no-referrer"
-          className="webview-frame"
-        />
+        <>
+          <iframe
+            title="Veil live WebView binding"
+            src={binding.targetUrl}
+            sandbox={binding.sandbox}
+            referrerPolicy="no-referrer"
+            className="webview-frame"
+          />
+          <p className="muted">
+            Some sites refuse to be displayed inside any frame (their own X-Frame-Options or
+            Content-Security-Policy setting, not a Veil restriction). If the area above stays
+            blank after navigation succeeds, that's likely why.
+          </p>
+        </>
       ) : (
         <div className="empty-state">Navigation blocked by Veil policy.</div>
       )}
