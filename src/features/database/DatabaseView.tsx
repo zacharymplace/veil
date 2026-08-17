@@ -16,45 +16,69 @@ export function DatabaseView() {
   const [passphrase, setPassphrase] = useState("");
   const [encryptedExport, setEncryptedExport] = useState("");
   const [readiness, setReadiness] = useState("");
+  const [error, setError] = useState("");
+
+  async function withErrorHandling(action: () => Promise<void>) {
+    try {
+      setError("");
+      await action();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
+  }
 
   async function refreshStats() {
-    setStats(await invoke<DatabaseStats>("db_stats"));
+    await withErrorHandling(async () => {
+      setStats(await invoke<DatabaseStats>("db_stats"));
+    });
   }
 
   async function exportJson() {
-    setExportText(await invoke<string>("db_export_json"));
+    await withErrorHandling(async () => {
+      setExportText(await invoke<string>("db_export_json"));
+    });
   }
 
   async function exportFile() {
-    setExportPath(await invoke<string>("db_export_file"));
+    await withErrorHandling(async () => {
+      setExportPath(await invoke<string>("db_export_file"));
+    });
   }
 
   async function importJson() {
-    const result = await invoke<Record<string, number>>("db_import_json", {
-      raw: importText,
-    });
+    await withErrorHandling(async () => {
+      const result = await invoke<Record<string, number>>("db_import_json", {
+        raw: importText,
+      });
 
-    setImportResult(JSON.stringify(result, null, 2));
-    await refreshStats();
+      setImportResult(JSON.stringify(result, null, 2));
+      await refreshStats();
+    });
   }
 
   async function checkEncryptionReadiness() {
-    const result = await invoke<Record<string, unknown>>("db_encryption_readiness");
-    setReadiness(JSON.stringify(result, null, 2));
+    await withErrorHandling(async () => {
+      const result = await invoke<Record<string, unknown>>("db_encryption_readiness");
+      setReadiness(JSON.stringify(result, null, 2));
+    });
   }
 
   async function exportEncrypted() {
-    setEncryptedExport(await invoke<string>("db_export_encrypted", { passphrase }));
+    await withErrorHandling(async () => {
+      setEncryptedExport(await invoke<string>("db_export_encrypted", { passphrase }));
+    });
   }
 
   async function importEncrypted() {
-    const result = await invoke<Record<string, number>>("db_import_encrypted", {
-      encryptedJson: importText,
-      passphrase,
-    });
+    await withErrorHandling(async () => {
+      const result = await invoke<Record<string, number>>("db_import_encrypted", {
+        encryptedJson: importText,
+        passphrase,
+      });
 
-    setImportResult(JSON.stringify(result, null, 2));
-    await refreshStats();
+      setImportResult(JSON.stringify(result, null, 2));
+      await refreshStats();
+    });
   }
 
   return (
@@ -71,6 +95,8 @@ export function DatabaseView() {
           <button onClick={exportFile}>Export File</button>
         </div>
       </div>
+
+      {error && <p className="error-banner">{error}</p>}
 
       <div className="grid">
         <div className="card">

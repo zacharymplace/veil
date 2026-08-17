@@ -12,9 +12,21 @@ export function VaultView() {
   const [title, setTitle] = useState("");
   const [tagText, setTagText] = useState("");
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [error, setError] = useState("");
+
+  async function withErrorHandling(action: () => Promise<void>) {
+    try {
+      setError("");
+      await action();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
+  }
 
   async function refreshBookmarks() {
-    setBookmarks(await listBookmarksAsync());
+    await withErrorHandling(async () => {
+      setBookmarks(await listBookmarksAsync());
+    });
   }
 
   useEffect(() => {
@@ -24,30 +36,36 @@ export function VaultView() {
   async function addBookmark() {
     if (!url || !title) return;
 
-    await saveBookmarkAsync({
-      url,
-      title,
-      tags: tagText
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
-      notes: "",
-    });
+    await withErrorHandling(async () => {
+      await saveBookmarkAsync({
+        url,
+        title,
+        tags: tagText
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        notes: "",
+      });
 
-    setUrl("");
-    setTitle("");
-    setTagText("");
-    await refreshBookmarks();
+      setUrl("");
+      setTitle("");
+      setTagText("");
+      await refreshBookmarks();
+    });
   }
 
   async function deleteBookmark(id: string) {
-    await removeBookmarkAsync(id);
-    await refreshBookmarks();
+    await withErrorHandling(async () => {
+      await removeBookmarkAsync(id);
+      await refreshBookmarks();
+    });
   }
 
   async function wipeAll() {
-    await wipeVaultAsync();
-    setBookmarks([]);
+    await withErrorHandling(async () => {
+      await wipeVaultAsync();
+      setBookmarks([]);
+    });
   }
 
   return (
@@ -59,6 +77,8 @@ export function VaultView() {
         </div>
         <button className="danger-button" onClick={wipeAll}>Wipe vault</button>
       </div>
+
+      {error && <p className="error-banner">{error}</p>}
 
       <div className="grid">
         <div className="card">

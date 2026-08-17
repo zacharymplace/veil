@@ -56,12 +56,10 @@ export function cleanupIsolationScope(session: BrowserSession): IsolationScope |
   const cleanup = {
     sessionId: session.id,
     profile: session.profile,
-    clearedHistory: !scope.persistsHistory,
-    clearedCookies: !scope.persistsCookies,
-    clearedCache: !scope.persistsCache,
-    retainedHistory: scope.persistsHistory,
-    retainedCookies: scope.persistsCookies,
-    retainedCache: scope.persistsCache,
+    historyPolicy: scope.persistsHistory ? "retained" : "ephemeral",
+    cookiePolicy: scope.persistsCookies ? "retained" : "ephemeral",
+    cachePolicy: scope.persistsCache ? "retained" : "ephemeral",
+    note: "Local isolation-scope bookkeeping removed. Browser-level cookie and cache storage is not yet partitioned per session.",
   };
 
   scopes.delete(session.id);

@@ -23,6 +23,7 @@ const PROFILES: SessionProfile[] = [
 export function HomeView() {
   const [address, setAddress] = useState("");
   const [session, setSession] = useState<BrowserSession>(createSession("temporary"));
+  const [error, setError] = useState("");
   const vault = vaultSummary();
   const score = privacyScore();
 
@@ -41,12 +42,17 @@ export function HomeView() {
   async function saveCurrent() {
     if (!session.currentUrl) return;
 
-    await saveBookmarkAsync({
-      title: session.currentUrl.replace(/^https?:\/\//, ""),
-      url: session.currentUrl,
-      tags: [session.profile],
-      notes: `Saved from ${sessionLabel(session.profile)} session.`,
-    });
+    try {
+      setError("");
+      await saveBookmarkAsync({
+        title: session.currentUrl.replace(/^https?:\/\//, ""),
+        url: session.currentUrl,
+        tags: [session.profile],
+        notes: `Saved from ${sessionLabel(session.profile)} session.`,
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
   }
 
   return (
@@ -72,6 +78,8 @@ export function HomeView() {
           </button>
         ))}
       </div>
+
+      {error && <p className="error-banner">{error}</p>}
 
       <div className="browser-shell">
         <div className="browser-toolbar">
@@ -104,8 +112,8 @@ export function HomeView() {
             <div>
               <h2>{sessionLabel(session.profile)} Session</h2>
               <p>
-                This session has isolated cookies, disabled downloads, and a separate
-                privacy context.
+                Downloads are disabled and navigation is policy-governed. Cookie and
+                storage isolation between profiles is not implemented yet.
               </p>
             </div>
           )}
@@ -115,7 +123,7 @@ export function HomeView() {
           <span>Session: {session.id.slice(0, 8)}</span>
           <span>Profile: {sessionLabel(session.profile)}</span>
           <span>Downloads disabled</span>
-          <span>Cookies isolated</span>
+          <span>Cookies shared across profiles (isolation not yet implemented)</span>
         </div>
       </div>
 

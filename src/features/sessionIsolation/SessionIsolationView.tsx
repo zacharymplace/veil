@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   PROFILE_ORDER,
+  PROFILE_POLICIES,
   profileLabel,
   type SessionProfile,
 } from "../../browser/profiles/profiles";
@@ -9,6 +10,7 @@ import {
   browserEngineIsolationScopes,
   createBrowserEngineSession,
 } from "../../browser/engine/browserEngineV05";
+import type { BrowserSession } from "../../browser/session/sessionManager";
 
 export function SessionIsolationView() {
   const [profile, setProfile] = useState<SessionProfile>("temporary");
@@ -28,8 +30,13 @@ export function SessionIsolationView() {
     const scope = scopes.find((item) => item.sessionId === scopeId);
     if (!scope) return;
 
-    const session = createBrowserEngineSession(scope.profile);
-    Object.assign(session, { id: scope.sessionId });
+    const session: BrowserSession = {
+      id: scope.sessionId,
+      profile: scope.profile,
+      startedAt: new Date().toISOString(),
+      currentUrl: "",
+      policy: PROFILE_POLICIES[scope.profile],
+    };
 
     browserEngineCleanup(session);
     setVersion((current) => current + 1);

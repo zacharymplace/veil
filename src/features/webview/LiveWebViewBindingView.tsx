@@ -50,10 +50,12 @@ export function LiveWebViewBindingView() {
         <span className={binding.status === "ready" ? "policy-badge ready" : "policy-badge blocked"}>
           Status: {binding.status}
         </span>
-        <span className="policy-badge blocked">
+        <span className={liveWebViewDownloadsAllowed(binding) ? "policy-badge ready" : "policy-badge blocked"}>
           Downloads: {liveWebViewDownloadsAllowed(binding) ? "allowed" : "blocked"}
         </span>
-        <span className="policy-badge ready">Sandbox: active</span>
+        <span className={binding.sandbox.length > 0 ? "policy-badge ready" : "policy-badge blocked"}>
+          Sandbox: {binding.sandbox.length > 0 ? "active" : "inactive"}
+        </span>
       </div>
 
       <p className="policy-reason">{binding.reason}</p>
