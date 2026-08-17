@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createBrowserEngineSession } from "../../browser/engine/browserEngineV05";
+import { PROFILE_ORDER, profileLabel, type SessionProfile } from "../../browser/profiles/profiles";
 import {
   bindLiveWebViewNavigation,
   liveWebViewDownloadsAllowed,
@@ -16,13 +17,22 @@ import {
   type WebViewBounds,
 } from "../../browser/webview/nativeWebViewBridge";
 
+// Mirrors profile_data_store::is_persistent_profile in Rust -- kept in
+// sync manually since it's just for the UI label, not enforcement (Rust
+// is the source of truth for which profiles actually get a stable,
+// reused data store vs. a fresh one wiped on close).
+function isPersistentProfile(profile: SessionProfile): boolean {
+  return profile === "shopping";
+}
+
 function rectFromElement(element: HTMLElement): WebViewBounds {
   const rect = element.getBoundingClientRect();
   return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
 }
 
 export function LiveWebViewBindingView() {
-  const session = useMemo(() => createBrowserEngineSession("temporary"), []);
+  const [profile, setProfile] = useState<SessionProfile>("temporary");
+  const session = useMemo(() => createBrowserEngineSession(profile), [profile]);
   const native = useMemo(() => hasNativeWebViewSupport(), []);
   const [input, setInput] = useState("https://example.com");
   const [url, setUrl] = useState("https://example.com");
@@ -62,12 +72,30 @@ export function LiveWebViewBindingView() {
     if (!native || !frameRef.current) return;
 
     const element = frameRef.current;
-    const observer = new ResizeObserver(() => {
-      setNativeWebViewBounds(rectFromElement(element)).catch(() => {});
-    });
+    let frame = 0;
+    const syncBounds = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setNativeWebViewBounds(rectFromElement(element)).catch(() => {});
+      });
+    };
 
+    const observer = new ResizeObserver(syncBounds);
     observer.observe(element);
-    return () => observer.disconnect();
+
+    // ResizeObserver only fires on size changes -- the native webview is
+    // positioned in screen coordinates, so scrolling the page (which moves
+    // the placeholder div without resizing it) would otherwise leave the
+    // native content stuck in its old position while everything around it
+    // scrolls. `capture: true` catches scroll on any scrollable ancestor,
+    // not just window-level scroll.
+    window.addEventListener("scroll", syncBounds, { capture: true, passive: true });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("scroll", syncBounds, { capture: true });
+    };
   }, [native, binding.targetUrl]);
 
   useEffect(() => {
@@ -83,6 +111,8 @@ export function LiveWebViewBindingView() {
     setDecisions((current) => appendWebViewDecision(current, nextBinding));
   }
 
+  const persistent = isPersistentProfile(profile);
+
   return (
     <section className="panel">
       <h1>Live WebView Binding</h1>
@@ -91,6 +121,18 @@ export function LiveWebViewBindingView() {
           ? "Native WebView: HTTPS-only navigation and downloads are enforced natively by Rust for every navigation, not just the address you type."
           : "Preview mode (no Tauri runtime detected): shows the policy decision only. Real enforcement requires the packaged app."}
       </p>
+
+      <div className="session-strip">
+        {PROFILE_ORDER.map((item) => (
+          <button
+            key={item}
+            className={profile === item ? "session-chip active" : "session-chip"}
+            onClick={() => setProfile(item)}
+          >
+            {profileLabel(item)}
+          </button>
+        ))}
+      </div>
 
       <div className="browser-bar">
         <input
@@ -113,6 +155,14 @@ export function LiveWebViewBindingView() {
         </span>
         <span className={native ? "policy-badge ready" : "policy-badge blocked"}>
           Enforcement: {native ? "native (Rust)" : "preview only"}
+        </span>
+        <span className={native ? "policy-badge ready" : "policy-badge blocked"}>
+          Storage:{" "}
+          {native
+            ? persistent
+              ? "isolated (persists across restarts)"
+              : "isolated (wiped on close)"
+            : "shared (preview mode)"}
         </span>
       </div>
 
@@ -137,6 +187,8 @@ export function LiveWebViewBindingView() {
               Downloads are blocked when the server forces a file save (e.g. clicking a link to a
               .zip or .exe). Content a site renders inline instead of downloading -- like a PDF
               export -- may still display here, since that's a normal page view, not a download.
+              Cookies and storage for this profile are on their own WKWebsiteDataStore, separate
+              from every other profile{persistent ? "" : ", and deleted when you leave this tab"}.
             </p>
           ) : (
             <p className="muted">

@@ -115,16 +115,17 @@ export function HomeView() {
               <span className="muted">{sessionLabel(session.profile)} session</span>
               <h2>{session.currentUrl}</h2>
               <p>
-                WebView integration comes after session isolation, permission policy,
-                and storage boundaries are implemented in Rust.
+                This is a policy preview, not a live page -- open the WebView screen for real
+                browsing with native download/navigation enforcement and per-profile storage
+                isolation.
               </p>
             </div>
           ) : (
             <div>
               <h2>{sessionLabel(session.profile)} Session</h2>
               <p>
-                Downloads are disabled and navigation is policy-governed. Cookie and
-                storage isolation between profiles is not implemented yet.
+                Downloads are disabled and navigation is policy-governed here too, but this
+                screen doesn't render real pages. See the WebView screen for that.
               </p>
             </div>
           )}
@@ -134,7 +135,7 @@ export function HomeView() {
           <span>Session: {session.id.slice(0, 8)}</span>
           <span>Profile: {sessionLabel(session.profile)}</span>
           <span>Downloads disabled</span>
-          <span>Cookies shared across profiles (isolation not yet implemented)</span>
+          <span>Storage isolation: see WebView screen</span>
         </div>
       </div>
 

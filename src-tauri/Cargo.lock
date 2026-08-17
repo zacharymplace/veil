@@ -3859,6 +3859,7 @@ dependencies = [
  "tauri-plugin-opener",
  "url",
  "uuid",
+ "wry",
 ]
 
 [[package]]

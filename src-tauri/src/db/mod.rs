@@ -115,6 +115,12 @@ fn migrate(conn: &Connection) -> Result<(), String> {
             at TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS profile_data_stores (
+            profile TEXT PRIMARY KEY,
+            identifier_hex TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_bookmarks_created_at
         ON bookmarks(created_at DESC);
 
@@ -393,6 +399,41 @@ pub fn clear_download_records(app: &AppHandle) -> Result<(), String> {
     let conn = open(app)?;
     conn.execute("DELETE FROM download_records", [])
         .map_err(|error| error.to_string())?;
+    Ok(())
+}
+
+/// Looks up a persistent profile's stored WKWebsiteDataStore identifier.
+/// Only called for profiles whose cookies are meant to survive a restart
+/// (see profile_data_store::is_persistent_profile) -- ephemeral profiles
+/// never have a row here.
+pub fn get_profile_data_store_id(app: &AppHandle, profile: &str) -> Result<Option<String>, String> {
+    let conn = open(app)?;
+
+    conn.query_row(
+        "SELECT identifier_hex FROM profile_data_stores WHERE profile = ?1",
+        params![profile],
+        |row| row.get(0),
+    )
+    .map(Some)
+    .or_else(|error| match error {
+        rusqlite::Error::QueryReturnedNoRows => Ok(None),
+        other => Err(other.to_string()),
+    })
+}
+
+pub fn set_profile_data_store_id(
+    app: &AppHandle,
+    profile: &str,
+    identifier_hex: &str,
+) -> Result<(), String> {
+    let conn = open(app)?;
+
+    conn.execute(
+        "INSERT OR REPLACE INTO profile_data_stores (profile, identifier_hex, created_at) VALUES (?1, ?2, ?3)",
+        params![profile, identifier_hex, chrono::Utc::now().to_rfc3339()],
+    )
+    .map_err(|error| error.to_string())?;
+
     Ok(())
 }
 
@@ -734,6 +775,47 @@ mod tests {
 
         assert_eq!(wiped_permissions, 0);
         assert_eq!(wiped_downloads, 0);
+    }
+
+    #[test]
+    fn profile_data_store_upsert_replaces_existing_row() {
+        let conn = Connection::open_in_memory().expect("in-memory sqlite should open");
+        migrate_test(&conn);
+
+        conn.execute(
+            "INSERT OR REPLACE INTO profile_data_stores (profile, identifier_hex, created_at) VALUES (?1, ?2, ?3)",
+            params!["shopping", "aa".repeat(16), "2026-01-01T00:00:00Z"],
+        )
+        .expect("first insert should pass");
+
+        conn.execute(
+            "INSERT OR REPLACE INTO profile_data_stores (profile, identifier_hex, created_at) VALUES (?1, ?2, ?3)",
+            params!["shopping", "bb".repeat(16), "2026-01-02T00:00:00Z"],
+        )
+        .expect("replace should pass");
+
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM profile_data_stores", [], |row| {
+                row.get(0)
+            })
+            .expect("count should pass");
+        assert_eq!(
+            count, 1,
+            "profile is the primary key, replace should not duplicate rows"
+        );
+
+        let stored: String = conn
+            .query_row(
+                "SELECT identifier_hex FROM profile_data_stores WHERE profile = 'shopping'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("lookup should pass");
+        assert_eq!(
+            stored,
+            "bb".repeat(16),
+            "replace should overwrite the identifier"
+        );
     }
 
     fn temp_db_path(label: &str) -> PathBuf {

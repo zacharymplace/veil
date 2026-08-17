@@ -1,6 +1,7 @@
 mod commands;
 mod db;
 mod keychain;
+mod profile_data_store;
 mod storage;
 mod webview_policy;
 
