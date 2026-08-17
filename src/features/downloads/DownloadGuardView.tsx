@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PROFILE_ORDER,
   profileLabel,
   type SessionProfile,
 } from "../../browser/profiles/profiles";
+import type { DownloadRecord } from "../../browser/downloads/registry/downloadRegistry";
 import {
   browserEngineCheckDownload,
   browserEngineDownloadRecords,
@@ -14,22 +15,35 @@ export function DownloadGuardView() {
   const [profile, setProfile] = useState<SessionProfile>("temporary");
   const [session, setSession] = useState(() => createBrowserEngineSession("temporary"));
   const [url, setUrl] = useState("https://example.com/file.zip");
-  const [version, setVersion] = useState(0);
+  const [records, setRecords] = useState<DownloadRecord[]>([]);
+  const [error, setError] = useState("");
 
-  const records = useMemo(() => {
-    version;
-    return browserEngineDownloadRecords();
-  }, [version]);
+  async function refreshRecords() {
+    try {
+      setError("");
+      setRecords(await browserEngineDownloadRecords());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
+  }
+
+  useEffect(() => {
+    refreshRecords();
+  }, []);
 
   function newSession(nextProfile: SessionProfile) {
     setProfile(nextProfile);
     setSession(createBrowserEngineSession(nextProfile));
-    setVersion((current) => current + 1);
   }
 
-  function evaluate() {
-    browserEngineCheckDownload(session, url);
-    setVersion((current) => current + 1);
+  async function evaluate() {
+    try {
+      setError("");
+      await browserEngineCheckDownload(session, url);
+      await refreshRecords();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
   }
 
   return (
@@ -40,6 +54,8 @@ export function DownloadGuardView() {
           <p>v0.8 blocks downloads by default and records file-risk decisions.</p>
         </div>
       </div>
+
+      {error && <p className="error-banner">{error}</p>}
 
       <div className="session-strip">
         {PROFILE_ORDER.map((item) => (

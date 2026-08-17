@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   PROFILE_ORDER,
   profileLabel,
   type SessionProfile,
 } from "../../browser/profiles/profiles";
 import type { BrowserPermission } from "../../browser/permissions/permissionManager";
+import type { PermissionRecord } from "../../browser/permissions/registry/permissionRegistry";
 import {
   browserEnginePermissionRecords,
   browserEngineRequestPermission,
@@ -16,22 +17,35 @@ const PERMISSIONS: BrowserPermission[] = ["camera", "microphone", "location", "c
 export function PermissionsView() {
   const [profile, setProfile] = useState<SessionProfile>("temporary");
   const [session, setSession] = useState(() => createBrowserEngineSession("temporary"));
-  const [version, setVersion] = useState(0);
+  const [records, setRecords] = useState<PermissionRecord[]>([]);
+  const [error, setError] = useState("");
 
-  const records = useMemo(() => {
-    version;
-    return browserEnginePermissionRecords();
-  }, [version]);
+  async function refreshRecords() {
+    try {
+      setError("");
+      setRecords(await browserEnginePermissionRecords());
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
+  }
+
+  useEffect(() => {
+    refreshRecords();
+  }, []);
 
   function newSession(nextProfile: SessionProfile) {
     setProfile(nextProfile);
     setSession(createBrowserEngineSession(nextProfile));
-    setVersion((current) => current + 1);
   }
 
-  function request(permission: BrowserPermission) {
-    browserEngineRequestPermission(session, permission);
-    setVersion((current) => current + 1);
+  async function request(permission: BrowserPermission) {
+    try {
+      setError("");
+      await browserEngineRequestPermission(session, permission);
+      await refreshRecords();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
   }
 
   return (
@@ -42,6 +56,8 @@ export function PermissionsView() {
           <p>v0.7 per-session permission registry with audit-backed decisions.</p>
         </div>
       </div>
+
+      {error && <p className="error-banner">{error}</p>}
 
       <div className="session-strip">
         {PROFILE_ORDER.map((item) => (

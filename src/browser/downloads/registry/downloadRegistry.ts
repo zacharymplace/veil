@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import type { BrowserSession } from "../../session/sessionManager";
 import { canDownload } from "../downloadPolicy";
 import { appendAuditEvent } from "../../../security/audit/auditLog";
@@ -36,7 +37,11 @@ const DANGEROUS_EXTENSIONS = new Set([
   "zip",
 ]);
 
-let downloadRecords: DownloadRecord[] = [];
+function hasTauriRuntime(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
+let memoryDownloadRecords: DownloadRecord[] = [];
 
 function filenameFromUrl(url: string): string {
   try {
@@ -59,37 +64,59 @@ function riskForExtension(extension: string): DownloadRisk {
   return DANGEROUS_EXTENSIONS.has(extension) ? "high" : "low";
 }
 
-export function evaluateDownloadForSession(
+async function persistDownloadRecord(
+  input: Omit<DownloadRecord, "id" | "at">
+): Promise<DownloadRecord> {
+  if (!hasTauriRuntime()) {
+    const record: DownloadRecord = {
+      ...input,
+      id: crypto.randomUUID(),
+      at: new Date().toISOString(),
+    };
+
+    memoryDownloadRecords = [record, ...memoryDownloadRecords].slice(0, 250);
+    return record;
+  }
+
+  return invoke<DownloadRecord>("download_append_record", {
+    sessionId: input.sessionId,
+    profile: input.profile,
+    url: input.url,
+    filename: input.filename,
+    extension: input.extension,
+    risk: input.risk,
+    status: input.status,
+    reason: input.reason,
+  });
+}
+
+export async function evaluateDownloadForSession(
   session: BrowserSession,
   url: string
-): DownloadRecord {
+): Promise<DownloadRecord> {
   const policy = canDownload(url);
   const filename = filenameFromUrl(url);
   const extension = extensionFromFilename(filename);
   const risk = riskForExtension(extension);
 
-  const record: DownloadRecord = {
-    id: crypto.randomUUID(),
+  const status =
+    policy.action === "allow" ? "allowed" : policy.action === "prompt" ? "prompt" : "blocked";
+
+  const reason =
+    risk === "high"
+      ? `Blocked by default. .${extension} is a high-risk file type.`
+      : policy.reason;
+
+  const record = await persistDownloadRecord({
     sessionId: session.id,
     profile: session.profile,
     url,
     filename,
     extension,
     risk,
-    status:
-      policy.action === "allow"
-        ? "allowed"
-        : policy.action === "prompt"
-          ? "prompt"
-          : "blocked",
-    reason:
-      risk === "high"
-        ? `Blocked by default. .${extension} is a high-risk file type.`
-        : policy.reason,
-    at: new Date().toISOString(),
-  };
-
-  downloadRecords = [record, ...downloadRecords].slice(0, 250);
+    status,
+    reason,
+  });
 
   appendAuditEvent({
     type: "download.evaluated",
@@ -100,10 +127,16 @@ export function evaluateDownloadForSession(
   return record;
 }
 
-export function listDownloadRecords(): DownloadRecord[] {
-  return downloadRecords;
+export async function listDownloadRecords(): Promise<DownloadRecord[]> {
+  if (!hasTauriRuntime()) return memoryDownloadRecords;
+  return invoke<DownloadRecord[]>("download_list_records");
 }
 
-export function clearDownloadRecords(): void {
-  downloadRecords = [];
+export async function clearDownloadRecords(): Promise<void> {
+  if (!hasTauriRuntime()) {
+    memoryDownloadRecords = [];
+    return;
+  }
+
+  await invoke("download_clear_records");
 }

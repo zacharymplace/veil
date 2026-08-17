@@ -22,6 +22,7 @@ export function BrowserEngineView() {
   const [address, setAddress] = useState("");
   const [downloadUrl, setDownloadUrl] = useState("");
   const [version, setVersion] = useState(0);
+  const [error, setError] = useState("");
 
   const history = useMemo(() => {
     version;
@@ -45,14 +46,24 @@ export function BrowserEngineView() {
     setVersion((current) => current + 1);
   }
 
-  function request(permission: BrowserPermission) {
-    browserEngineRequestPermission(session, permission);
-    setVersion((current) => current + 1);
+  async function request(permission: BrowserPermission) {
+    try {
+      setError("");
+      await browserEngineRequestPermission(session, permission);
+      setVersion((current) => current + 1);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
   }
 
-  function checkDownload() {
-    browserEngineCheckDownload(session, downloadUrl || "https://example.com/file.zip");
-    setVersion((current) => current + 1);
+  async function checkDownload() {
+    try {
+      setError("");
+      await browserEngineCheckDownload(session, downloadUrl || "https://example.com/file.zip");
+      setVersion((current) => current + 1);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    }
   }
 
   return (
@@ -64,6 +75,8 @@ export function BrowserEngineView() {
         </div>
         <button className="ghost-button" onClick={cleanup}>Cleanup session</button>
       </div>
+
+      {error && <p className="error-banner">{error}</p>}
 
       <div className="session-strip">
         {PROFILE_ORDER.map((item) => (

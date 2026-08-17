@@ -54,14 +54,14 @@ export function browserEngineNavigate(
   return navigateSession(session, prepared.url);
 }
 
-export function browserEngineRequestPermission(
+export async function browserEngineRequestPermission(
   session: BrowserSession,
   permission: BrowserPermission
 ) {
   return evaluatePermissionForSession(session, permission);
 }
 
-export function browserEngineCheckDownload(session: BrowserSession, url: string) {
+export async function browserEngineCheckDownload(session: BrowserSession, url: string) {
   return evaluateDownloadForSession(session, url);
 }
 
@@ -98,11 +98,11 @@ export function browserEngineIsolationScopes() {
 }
 
 
-export function browserEnginePermissionRecords() {
+export async function browserEnginePermissionRecords() {
   return listPermissionRecords();
 }
 
 
-export function browserEngineDownloadRecords() {
+export async function browserEngineDownloadRecords() {
   return listDownloadRecords();
 }

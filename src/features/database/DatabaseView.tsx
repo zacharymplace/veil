@@ -5,6 +5,8 @@ type DatabaseStats = {
   database: string;
   bookmarks: number;
   auditEvents: number;
+  permissionRecords: number;
+  downloadRecords: number;
 };
 
 export function DatabaseView() {
@@ -106,6 +108,8 @@ export function DatabaseView() {
               <span>Database: {stats.database}</span>
               <span>Bookmarks: {stats.bookmarks}</span>
               <span>Audit Events: {stats.auditEvents}</span>
+              <span>Permission Records: {stats.permissionRecords}</span>
+              <span>Download Records: {stats.downloadRecords}</span>
               <span>Status: connected</span>
             </div>
           ) : (

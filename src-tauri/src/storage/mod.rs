@@ -1,4 +1,6 @@
 pub mod audit;
+pub mod download;
+pub mod permission;
 
 use serde::{Deserialize, Serialize};
 

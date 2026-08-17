@@ -5,7 +5,9 @@ use tauri::AppHandle;
 use uuid::Uuid;
 
 use crate::db;
-use crate::storage::{audit::AuditEvent, VaultBookmark};
+use crate::storage::{
+    audit::AuditEvent, download::DownloadRecord, permission::PermissionRecord, VaultBookmark,
+};
 
 #[tauri::command]
 pub fn vault_list_bookmarks(app: AppHandle) -> Result<Vec<VaultBookmark>, String> {
@@ -75,6 +77,79 @@ pub fn audit_append_event(
 #[tauri::command]
 pub fn audit_clear_events(app: AppHandle) -> Result<(), String> {
     db::clear_audit_events(&app)
+}
+
+#[tauri::command]
+pub fn permission_list_records(app: AppHandle) -> Result<Vec<PermissionRecord>, String> {
+    db::list_permission_records(&app)
+}
+
+#[tauri::command]
+pub fn permission_append_record(
+    app: AppHandle,
+    session_id: String,
+    profile: String,
+    permission: String,
+    status: String,
+    reason: String,
+) -> Result<PermissionRecord, String> {
+    let record = PermissionRecord {
+        id: Uuid::new_v4().to_string(),
+        session_id,
+        profile,
+        permission,
+        status,
+        reason,
+        at: Utc::now().to_rfc3339(),
+    };
+
+    db::insert_permission_record(&app, &record)?;
+    Ok(record)
+}
+
+#[tauri::command]
+pub fn permission_clear_records(app: AppHandle) -> Result<(), String> {
+    db::clear_permission_records(&app)
+}
+
+#[tauri::command]
+pub fn download_list_records(app: AppHandle) -> Result<Vec<DownloadRecord>, String> {
+    db::list_download_records(&app)
+}
+
+#[tauri::command]
+#[allow(clippy::too_many_arguments)]
+pub fn download_append_record(
+    app: AppHandle,
+    session_id: String,
+    profile: String,
+    url: String,
+    filename: String,
+    extension: String,
+    risk: String,
+    status: String,
+    reason: String,
+) -> Result<DownloadRecord, String> {
+    let record = DownloadRecord {
+        id: Uuid::new_v4().to_string(),
+        session_id,
+        profile,
+        url,
+        filename,
+        extension,
+        risk,
+        status,
+        reason,
+        at: Utc::now().to_rfc3339(),
+    };
+
+    db::insert_download_record(&app, &record)?;
+    Ok(record)
+}
+
+#[tauri::command]
+pub fn download_clear_records(app: AppHandle) -> Result<(), String> {
+    db::clear_download_records(&app)
 }
 
 #[tauri::command]

@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import type { BrowserPermission } from "../permissionManager";
 import type { BrowserSession } from "../../session/sessionManager";
 import { requestPermission } from "../permissionManager";
@@ -15,30 +16,51 @@ export type PermissionRecord = {
   at: string;
 };
 
-let permissionRecords: PermissionRecord[] = [];
+function hasTauriRuntime(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
 
-export function evaluatePermissionForSession(
+let memoryPermissionRecords: PermissionRecord[] = [];
+
+async function persistPermissionRecord(
+  input: Omit<PermissionRecord, "id" | "at">
+): Promise<PermissionRecord> {
+  if (!hasTauriRuntime()) {
+    const record: PermissionRecord = {
+      ...input,
+      id: crypto.randomUUID(),
+      at: new Date().toISOString(),
+    };
+
+    memoryPermissionRecords = [record, ...memoryPermissionRecords].slice(0, 250);
+    return record;
+  }
+
+  return invoke<PermissionRecord>("permission_append_record", {
+    sessionId: input.sessionId,
+    profile: input.profile,
+    permission: input.permission,
+    status: input.status,
+    reason: input.reason,
+  });
+}
+
+export async function evaluatePermissionForSession(
   session: BrowserSession,
   permission: BrowserPermission
-): PermissionRecord {
+): Promise<PermissionRecord> {
   const decision = requestPermission(permission);
 
-  const record: PermissionRecord = {
-    id: crypto.randomUUID(),
+  const status: PermissionStatus =
+    decision.action === "allow" ? "allowed" : decision.action === "block" ? "blocked" : "prompt";
+
+  const record = await persistPermissionRecord({
     sessionId: session.id,
     profile: session.profile,
     permission,
-    status:
-      decision.action === "allow"
-        ? "allowed"
-        : decision.action === "block"
-          ? "blocked"
-          : "prompt",
+    status,
     reason: decision.reason,
-    at: new Date().toISOString(),
-  };
-
-  permissionRecords = [record, ...permissionRecords].slice(0, 250);
+  });
 
   appendAuditEvent({
     type: "permission.evaluated",
@@ -49,14 +71,23 @@ export function evaluatePermissionForSession(
   return record;
 }
 
-export function listPermissionRecords(): PermissionRecord[] {
-  return permissionRecords;
+export async function listPermissionRecords(): Promise<PermissionRecord[]> {
+  if (!hasTauriRuntime()) return memoryPermissionRecords;
+  return invoke<PermissionRecord[]>("permission_list_records");
 }
 
-export function listPermissionRecordsForSession(sessionId: string): PermissionRecord[] {
-  return permissionRecords.filter((record) => record.sessionId === sessionId);
+export async function listPermissionRecordsForSession(
+  sessionId: string
+): Promise<PermissionRecord[]> {
+  const records = await listPermissionRecords();
+  return records.filter((record) => record.sessionId === sessionId);
 }
 
-export function clearPermissionRecords(): void {
-  permissionRecords = [];
+export async function clearPermissionRecords(): Promise<void> {
+  if (!hasTauriRuntime()) {
+    memoryPermissionRecords = [];
+    return;
+  }
+
+  await invoke("permission_clear_records");
 }

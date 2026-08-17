@@ -50,11 +50,11 @@ export function evaluateWebViewNavigation(
   };
 }
 
-export function evaluateWebViewDownload(session: BrowserSession, url: string) {
+export async function evaluateWebViewDownload(session: BrowserSession, url: string) {
   return browserEngineCheckDownload(session, url);
 }
 
-export function evaluateWebViewPermission(
+export async function evaluateWebViewPermission(
   session: BrowserSession,
   permission: BrowserPermission
 ) {

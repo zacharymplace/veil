@@ -9,15 +9,15 @@ function assert(condition: unknown, message: string) {
 }
 
 const session = createBrowserEngineSession("financial");
-const camera = browserEngineRequestPermission(session, "camera");
-const location = browserEngineRequestPermission(session, "location");
+const camera = await browserEngineRequestPermission(session, "camera");
+const location = await browserEngineRequestPermission(session, "location");
 
 assert(camera.status === "prompt", "camera should prompt");
 assert(location.status === "prompt", "location should prompt");
 assert(camera.sessionId === session.id, "camera record should belong to session");
 assert(location.sessionId === session.id, "location record should belong to session");
 
-const records = browserEnginePermissionRecords();
+const records = await browserEnginePermissionRecords();
 assert(records.length >= 2, "permission records should be stored");
 
 console.log("PASS permission manager smoke");
