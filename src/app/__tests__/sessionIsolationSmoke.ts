@@ -1,5 +1,6 @@
 import {
   browserEngineCleanup,
+  browserEngineCleanupScope,
   browserEngineIsolationScopes,
   createBrowserEngineSession,
 } from "../../browser/engine/browserEngineV05";
@@ -30,6 +31,19 @@ browserEngineCleanup(temporary);
 assert(
   !browserEngineIsolationScopes().some((scope) => scope.sessionId === temporary.id),
   "temporary scope should be removed after cleanup"
+);
+
+const beforeScopeCleanup = browserEngineIsolationScopes().length;
+browserEngineCleanupScope(research.id);
+const afterScopeCleanup = browserEngineIsolationScopes();
+
+assert(
+  afterScopeCleanup.length === beforeScopeCleanup - 1,
+  "cleaning up a scope by id should shrink the scope list by exactly one, with no leaked replacement scope"
+);
+assert(
+  !afterScopeCleanup.some((scope) => scope.sessionId === research.id),
+  "research scope should be removed after cleanup by id"
 );
 
 console.log("PASS session isolation smoke");
