@@ -160,7 +160,7 @@ export function HomeView() {
             <span>Bookmarks: {vault.bookmarks}</span>
             <span>Collections: {vault.collections}</span>
             <span>Storage: SQLite</span>
-            <span>Encryption: planned</span>
+            <span>Encryption: {vault.encrypted ? "SQLCipher (at rest)" : "unavailable outside packaged app"}</span>
           </div>
         </div>
       </div>

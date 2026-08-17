@@ -32,8 +32,8 @@ export function PrivacyView() {
         />
         <ProtectionRow
           label="Encrypted local data"
-          description="SQLCipher integration is planned after UI hardening."
-          enabled={false}
+          description="The local database is encrypted at rest with SQLCipher; the key is stored in the OS keychain."
+          enabled
         />
       </div>
     </section>

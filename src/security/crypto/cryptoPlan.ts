@@ -1,6 +1,6 @@
 export const CRYPTO_PLAN = {
-  vaultEncryption: "SQLCipher planned",
-  keyStorage: "OS keychain planned",
+  vaultEncryption: "SQLCipher enabled",
+  keyStorage: "OS keychain enabled",
   secureDelete: "Rust command planned",
-  backups: "Encrypted export planned",
+  backups: "Argon2id-encrypted export enabled",
 } as const;

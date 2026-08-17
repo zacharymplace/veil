@@ -7,6 +7,10 @@ import {
   wipeVaultAsync,
 } from "./vaultAsync";
 
+function hasTauriRuntime(): boolean {
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+}
+
 export function VaultView() {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
@@ -94,7 +98,7 @@ export function VaultView() {
           <div className="mini-grid">
             <span>Backend: SQLite</span>
             <span>Format: veil.sqlite3</span>
-            <span>Encryption: planned</span>
+            <span>Encryption: {hasTauriRuntime() ? "SQLCipher (at rest)" : "unavailable outside packaged app"}</span>
             <span>Items: {bookmarks.length}</span>
           </div>
         </div>

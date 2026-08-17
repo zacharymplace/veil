@@ -7,8 +7,8 @@
 - React
 - TypeScript
 - SQLite
-- SQLCipher later
-- OS keychain later
+- SQLCipher
+- OS keychain
 
 ## Local Data
 

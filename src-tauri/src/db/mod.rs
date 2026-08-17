@@ -1,7 +1,8 @@
 use rusqlite::{params, Connection};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Manager};
 
+use crate::keychain;
 use crate::storage::audit::AuditEvent;
 use crate::storage::download::DownloadRecord;
 use crate::storage::permission::PermissionRecord;
@@ -17,8 +18,54 @@ fn db_path(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(dir.join("veil.sqlite3"))
 }
 
+fn apply_key(conn: &Connection, key: &[u8; 32]) -> Result<(), String> {
+    conn.pragma_update(None, "key", format!("x'{}'", keychain::encode_hex_key(key)))
+        .map_err(|error| error.to_string())
+}
+
+fn is_readable_with_key(conn: &Connection) -> bool {
+    conn.query_row("SELECT count(*) FROM sqlite_master", [], |row| {
+        row.get::<_, i64>(0)
+    })
+    .is_ok()
+}
+
+/// If an existing database file can't be read with the current key --
+/// meaning it predates encryption being enabled -- move it aside so a
+/// fresh encrypted database can be created at the same path. Prototype
+/// data only; see docs/recommendations/SQLCIPHER_KEYCHAIN_SCOPE.md for
+/// why this is a clean-slate reset rather than a real migration.
+fn reset_if_unreadable(path: &Path, key: &[u8; 32]) -> Result<(), String> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let conn = Connection::open(path).map_err(|error| error.to_string())?;
+    apply_key(&conn, key)?;
+    let readable = is_readable_with_key(&conn);
+    drop(conn);
+
+    if !readable {
+        let file_name = path
+            .file_name()
+            .map(|name| name.to_string_lossy().to_string())
+            .unwrap_or_else(|| "veil.sqlite3".to_string());
+
+        let backup_path = path.with_file_name(format!("{file_name}.pre-encryption.bak"));
+        std::fs::rename(path, &backup_path).map_err(|error| error.to_string())?;
+    }
+
+    Ok(())
+}
+
 fn open(app: &AppHandle) -> Result<Connection, String> {
-    let conn = Connection::open(db_path(app)?).map_err(|error| error.to_string())?;
+    let path = db_path(app)?;
+    let key = keychain::get_or_create_database_key()?;
+
+    reset_if_unreadable(&path, &key)?;
+
+    let conn = Connection::open(&path).map_err(|error| error.to_string())?;
+    apply_key(&conn, &key)?;
     migrate(&conn)?;
     Ok(conn)
 }
@@ -688,15 +735,124 @@ mod tests {
         assert_eq!(wiped_permissions, 0);
         assert_eq!(wiped_downloads, 0);
     }
+
+    fn temp_db_path(label: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "veil-db-test-{label}-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).expect("temp dir should be created");
+        dir.join("veil.sqlite3")
+    }
+
+    #[test]
+    fn encrypted_database_round_trips_across_reopen_with_correct_key() {
+        let key = [11u8; 32];
+        let path = temp_db_path("round-trip");
+
+        {
+            let conn = Connection::open(&path).expect("open should pass");
+            apply_key(&conn, &key).expect("key pragma should pass");
+            conn.execute("CREATE TABLE t (v TEXT)", [])
+                .expect("create should pass");
+            conn.execute("INSERT INTO t (v) VALUES ('secret')", [])
+                .expect("insert should pass");
+        }
+
+        let conn = Connection::open(&path).expect("reopen should pass");
+        apply_key(&conn, &key).expect("key pragma should pass on reopen");
+        let value: String = conn
+            .query_row("SELECT v FROM t", [], |row| row.get(0))
+            .expect("select with correct key should pass");
+        assert_eq!(value, "secret");
+
+        std::fs::remove_dir_all(path.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn encrypted_database_rejects_wrong_key() {
+        let key = [11u8; 32];
+        let wrong_key = [12u8; 32];
+        let path = temp_db_path("wrong-key");
+
+        {
+            let conn = Connection::open(&path).expect("open should pass");
+            apply_key(&conn, &key).expect("key pragma should pass");
+            conn.execute("CREATE TABLE t (v TEXT)", [])
+                .expect("create should pass");
+        }
+
+        let conn = Connection::open(&path).expect("reopen should pass");
+        apply_key(&conn, &wrong_key).expect("key pragma call itself should pass");
+        assert!(
+            !is_readable_with_key(&conn),
+            "wrong key should not be able to read the database"
+        );
+
+        std::fs::remove_dir_all(path.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn reset_if_unreadable_moves_aside_pre_encryption_database() {
+        let key = [9u8; 32];
+        let path = temp_db_path("reset-old-format");
+
+        {
+            let conn = Connection::open(&path).expect("open should pass");
+            conn.execute("CREATE TABLE t (id INTEGER)", [])
+                .expect("create should pass");
+        }
+
+        reset_if_unreadable(&path, &key).expect("reset should pass");
+
+        assert!(
+            !path.exists(),
+            "pre-encryption file should have been moved aside"
+        );
+
+        let backup_path = path.with_file_name("veil.sqlite3.pre-encryption.bak");
+        assert!(backup_path.exists(), "backup file should exist");
+
+        std::fs::remove_dir_all(path.parent().unwrap()).ok();
+    }
+
+    #[test]
+    fn reset_if_unreadable_leaves_correctly_keyed_database_alone() {
+        let key = [3u8; 32];
+        let path = temp_db_path("reset-already-keyed");
+
+        {
+            let conn = Connection::open(&path).expect("open should pass");
+            apply_key(&conn, &key).expect("key pragma should pass");
+            conn.execute("CREATE TABLE t (id INTEGER)", [])
+                .expect("create should pass");
+        }
+
+        reset_if_unreadable(&path, &key).expect("reset should pass");
+
+        assert!(
+            path.exists(),
+            "correctly keyed database should be left in place"
+        );
+
+        let backup_path = path.with_file_name("veil.sqlite3.pre-encryption.bak");
+        assert!(!backup_path.exists(), "no backup should be created");
+
+        std::fs::remove_dir_all(path.parent().unwrap()).ok();
+    }
 }
 
 pub fn encryption_readiness() -> serde_json::Value {
     serde_json::json!({
         "encryptedExport": true,
         "keyDerivation": "Argon2id",
-        "sqlcipher": "planned",
-        "keychain": "planned",
+        "sqlcipher": "enabled",
+        "keychain": "enabled",
         "secureDelete": "planned",
-        "currentDatabaseEncryption": false
+        "currentDatabaseEncryption": true
     })
 }

@@ -1,5 +1,6 @@
 mod commands;
 mod db;
+mod keychain;
 mod storage;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
