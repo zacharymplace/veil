@@ -15,7 +15,7 @@ export function LiveWebViewBindingView() {
   const [url, setUrl] = useState("https://example.com");
   const [decisions, setDecisions] = useState<WebViewDecisionLogEntry[]>([]);
 
-  const binding = bindLiveWebViewNavigation(session, url);
+  const binding = useMemo(() => bindLiveWebViewNavigation(session, url), [session, url]);
 
   useEffect(() => {
     setDecisions((current) =>
