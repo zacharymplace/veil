@@ -1,8 +1,8 @@
 {
   "schema_version": "0.1.0",
   "kind": "veil.packaged_webview_validation",
-  "source_commit": "3e44139",
-  "validated_at": "2026-07-31T21:55:48.580207Z",
+  "source_commit": "5af8ddf",
+  "validated_at": "2026-08-17T13:58:29Z",
   "platform": "macOS",
   "surface": "packaged Tauri desktop application",
   "checks": {
@@ -22,12 +22,18 @@
   "findings": [
     {
       "severity": "non_blocking",
+      "area": "WebView content rendering",
+      "finding": "Navigating to https://www.google.com and https://google.com produced a 'ready' status but a visually blank content area. This is Google's own X-Frame-Options/CSP frame-ancestors policy blocking embedding in any iframe from any origin (standard behavior everywhere, including Safari/Chrome), not a Veil-specific defect. Confirmed the underlying rendering pipeline works by loading https://en.wikipedia.org, which rendered real page content.",
+      "recommended_change": "Consider a short in-app note near the WebView (or in its documentation) that some sites refuse to be framed by design and will show a blank area even when status is 'ready', so this isn't mistaken for a bug during future manual passes."
+    },
+    {
+      "severity": "non_blocking",
       "area": "WebView decision log",
-      "finding": "The initial HTTPS-ready decision may appear multiple times during render or refresh.",
-      "recommended_change": "Deduplicate equivalent initial decisions in a later bounded observability refinement."
+      "finding": "Repeated 'ready' entries appeared in the decision log for the same or near-duplicate URLs (e.g. https://www.google.com and https://google.com) during this session's manual testing, consistent with the same non-blocking finding recorded in the previous validation pass at commit 3e44139.",
+      "recommended_change": "Deduplicate equivalent consecutive decisions in a later bounded observability refinement (carried forward from the prior validation record; not yet addressed)."
     }
   ],
   "decision": "pass",
-  "decision_reason": "The packaged macOS application launches successfully, renders the WebView surface, allows HTTPS navigation, blocks HTTP navigation, keeps downloads disabled, preserves sandboxing, exposes policy reasons, and records both allowed and blocked decisions.",
+  "decision_reason": "The packaged macOS application launches, renders the adult gate and Browser/WebView surfaces, allows HTTPS navigation (verified with real content rendering via Wikipedia), blocks HTTP navigation with a visible policy reason, keeps downloads blocked and the sandbox active, and records both allowed and blocked decisions in the log. Two non-blocking findings were recorded above: an expected third-party anti-framing behavior (Google) that could read as a bug without context, and a previously-known decision-log duplication issue that has not yet been fixed.",
   "validated_by": "human_operator"
 }

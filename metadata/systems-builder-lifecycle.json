@@ -7,7 +7,7 @@
   "source": {
     "repository": "zacharymplace/veil",
     "path": ".",
-    "commit": "a3b838e"
+    "commit": "5af8ddf"
   },
   "evidence": [
     {
@@ -64,13 +64,13 @@
       "kind": "validation",
       "reference": "docs/operator-notes/validation/packaged-webview-validation.json",
       "result": "pass",
-      "note": "Predates this round of fixes (commit 3e44139). Re-run before relying on it for the current commit; see next_action."
+      "note": "Re-run against commit 5af8ddf on 2026-08-17 by a human operator using the actual packaged .app (not the dev server). Confirmed real page content renders for HTTPS navigation (Wikipedia) and HTTP navigation is blocked with a visible reason. Two non-blocking findings recorded: Google's own anti-framing headers produce a blank content area (not a Veil defect), and the decision log still has a known, unfixed duplicate-entry issue carried over from the prior validation pass."
     }
   ],
-  "last_verified_at": "2026-08-17T00:00:00Z",
+  "last_verified_at": "2026-08-17T13:58:29Z",
   "next_action": {
-    "description": "Re-run the manual packaged macOS WebView validation against the current commit before treating it as current evidence — it was last performed before this round of bug fixes and the Argon2id crypto change. No new browser subsystem was added, so the existing validation script and checklist should still apply as-is.",
-    "command": "npm run validate:packaged-webview"
+    "description": "Fix the decision-log duplicate-entry issue in the live WebView view, now recorded twice across two validation passes without being addressed. Consider a small in-app note that some sites (e.g. Google) refuse to be framed by design, so a blank content area at 'ready' status isn't mistaken for a bug.",
+    "command": "npm run test:webview-decision-log"
   },
   "blockers": [],
   "capabilities": [
