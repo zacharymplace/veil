@@ -19,13 +19,18 @@ export function SettingsView() {
         />
         <ProtectionRow
           label="Session timer"
-          description="Shows private browsing session duration."
-          enabled
+          description="Shows private browsing session duration. Not implemented yet."
+          enabled={false}
         />
         <ProtectionRow
           label="Panic close"
-          description="Immediately closes private context."
-          enabled
+          description="Immediately closes private context. Not implemented yet."
+          enabled={false}
+        />
+        <ProtectionRow
+          label="Auto-lock"
+          description="Re-shows the adult gate after inactivity. The idle check exists (shouldAutoLock in safety.ts) but nothing calls it yet."
+          enabled={false}
         />
         <ProtectionRow
           label="Cloud sync"

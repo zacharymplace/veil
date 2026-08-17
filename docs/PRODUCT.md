@@ -21,9 +21,14 @@ Veil does not:
 
 ## MVP
 
-- Private browser shell
-- Encrypted bookmark vault
+- Private browser shell, with real per-profile cookie/storage isolation (macOS/iOS)
+- Encrypted bookmark vault (SQLCipher, at rest)
 - Privacy dashboard
-- Session controls
-- Panic close
-- Local data wipe
+- Session/profile controls
+- Per-category local data wipe (vault, audit trail, permission/download records)
+
+Not yet built, despite being listed here in earlier drafts of this
+doc: panic close, a visible session timer, and auto-lock-on-idle (the
+idle check exists in code but nothing calls it). Tracked honestly in
+`src/features/settings/SettingsView.tsx` rather than silently dropped
+from this list.

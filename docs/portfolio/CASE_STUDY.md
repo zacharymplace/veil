@@ -76,6 +76,44 @@ The product is a privacy and safety utility, not a content platform.
 - local export preview
 - clear and refresh actions
 
+### Live WebView Binding v1.1
+
+- HTTPS-only navigation bound to a real browsing surface
+- decision log and policy badges surfaced in the UI
+
+### Persisted Permission & Download Registries
+
+- moved from in-memory-only to SQLite persistence, matching the
+  existing bookmarks/audit_events pattern
+- verified surviving a real quit/relaunch of the packaged app
+
+### SQLCipher + OS Keychain Encryption
+
+- the local database is encrypted at rest (SQLCipher), with the key
+  generated once and held in the OS keychain, not a user-facing
+  passphrase
+- existing unencrypted databases get a clean-slate reset (documented
+  tradeoff, not a silent migration)
+
+### Native WebView Migration
+
+- replaced the iframe-based WebView with a real Tauri child webview
+- HTTPS-only navigation and download blocking enforced in Rust for
+  every navigation, not just the address typed in -- verified against
+  a real forced download (a GitHub release asset)
+- new-window/popup requests explicitly denied (found live that they
+  otherwise bypass both navigation and download policy)
+
+### Real Per-Profile Session Storage Isolation
+
+- every profile gets its own WKWebsiteDataStore (macOS/iOS); Shopping
+  (the one profile marked to persist cookies) keeps a stored,
+  reused identifier, every other profile gets a fresh one that is
+  genuinely deleted when its webview closes
+- verified live: switching from a profile with an active Google search
+  to another profile showed a completely fresh, logged-out Google --
+  not just distinct identifiers, actual isolated storage
+
 ## Architecture
 
 Veil is organized around engines rather than pages:
@@ -91,13 +129,17 @@ The UI renders state. The engines own behavior.
 
 ## Technical Stack
 
-- Tauri
+- Tauri (native child webview, not an iframe)
 - Rust
 - React
 - TypeScript
-- SQLite
-- AES-GCM prototype export encryption
+- SQLite, encrypted at rest with SQLCipher
+- OS keychain for the at-rest encryption key
+- Argon2id-derived, passphrase-based encrypted export (separate from
+  at-rest encryption, for portable backups)
 - Local JSON backup format
+- WKWebsiteDataStore per profile (macOS/iOS) for real cross-profile
+  storage isolation
 
 ## Verification
 
@@ -153,13 +195,30 @@ This project demonstrates:
 
 ## Next Work
 
-The next release should focus on one narrow goal:
+The live-WebView binding, real download/navigation enforcement, and
+real per-profile storage isolation described above are done, not
+planned -- this section previously described them as upcoming and was
+stale.
 
-Bind the existing Browser Engine to a live WebView while preserving the existing policies:
+What's actually still open:
 
-- HTTPS-only navigation
-- download blocking
-- permission prompts
-- audit logging
-- session isolation boundaries
+- **Permission-callback integration** (camera/mic/geolocation prompts
+  from real page content) is blocked upstream: the underlying `wry`
+  crate added the needed API in a version newer than what `tauri`
+  currently depends on, and there's no way to use it against a
+  webview Tauri itself constructs without a `tauri` release.
+- **Detecting downloads a site renders inline** instead of forcing a
+  save (e.g. a PDF export handled by the browser's built-in viewer)
+  isn't possible with Tauri's current public API for external URLs --
+  confirmed, not just unattempted.
+- **Windows/Linux storage isolation.** The macOS/iOS mechanism used
+  here (`WKWebsiteDataStore`) doesn't exist on other platforms. Scoped
+  what each platform's equivalent would cost (Linux is a reasonably
+  direct, similarly-cheap port; Windows' available mechanism is
+  meaningfully heavier, a full separate browser environment per
+  profile) but not built -- no Windows/Linux target exists for this
+  project yet.
+- **Per-profile content filtering**, restricting what's
+  allowed/displayed based on each profile's own policy parameters --
+  a real idea, not yet scoped.
 
