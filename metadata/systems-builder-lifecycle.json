@@ -7,7 +7,7 @@
   "source": {
     "repository": "zacharymplace/veil",
     "path": ".",
-    "commit": "953bdb6"
+    "commit": "85950a3"
   },
   "evidence": [
     {
@@ -67,10 +67,10 @@
       "note": "Re-run against commit 5af8ddf on 2026-08-17 by a human operator using the actual packaged .app (not the dev server). Confirmed real page content renders for HTTPS navigation (Wikipedia) and HTTP navigation is blocked with a visible reason. Two non-blocking findings recorded: Google's own anti-framing headers produce a blank content area (not a Veil defect), and the decision log still has a known, unfixed duplicate-entry issue carried over from the prior validation pass."
     }
   ],
-  "last_verified_at": "2026-08-17T14:20:00Z",
+  "last_verified_at": "2026-08-17T14:30:00Z",
   "next_action": {
-    "description": "Fixed one confirmed cause of audit-log noise in the WebView view: bindLiveWebViewNavigation ran unmemoized in the render body, so it re-fired its audit-logging side effect on every re-render (verified: typing 21 characters in the address bar previously added audit entries with zero navigation; now adds none). This is distinct from the 'WebView Decision Log' duplicate-entries finding from the packaged revalidation, which is more likely explained by the operator clicking Open multiple times while testing URLs (legitimate per-click logging) than by a bug -- unconfirmed either way. Remaining: add the in-app note that some sites (e.g. Google) refuse to be framed by design, so a blank content area at 'ready' status isn't mistaken for a bug.",
-    "command": "npm run test:webview-decision-log"
+    "description": "No specific outstanding action from this round. Both items opened by the 2026-08-17 packaged revalidation are closed: the render-body audit-log side-effect bug is fixed and verified, and an in-app note now explains that some sites (e.g. Google) refuse to be framed by design so a blank content area at 'ready' status isn't mistaken for a bug. The 'WebView Decision Log' duplicate-entries observation from that same validation pass remains unconfirmed as a real defect (most likely explained by repeated manual Open clicks) -- revisit only if it recurs with a reproducible single-click case.",
+    "command": "npm run check"
   },
   "blockers": [],
   "capabilities": [
