@@ -4,9 +4,9 @@
   "project_name": "Veil",
   "phase": "validate",
   "condition": "passing",
-  "summary": "Privacy-focused Tauri browser shell with passing TypeScript, policy, Rust, production build, session isolation, permission, download, audit, WebView contract, and live WebView binding validation. Recent work fixed silent-failure bugs, an isolation-scope cleanup leak, a disconnected vault bookmark count, corrected UI/audit claims that overstated session isolation as real storage separation (it is currently bookkeeping-only), replaced the encrypted-export key derivation with Argon2id, and moved the permission/download decision registries from in-memory-only to SQLite persistence.",
+  "summary": "Privacy-focused Tauri browser shell with passing TypeScript, policy, Rust, production build, session isolation, permission, download, audit, WebView contract, and live WebView binding validation. Recent work fixed silent-failure bugs, an isolation-scope cleanup leak, a disconnected vault bookmark count, corrected UI/audit claims that overstated session isolation as real storage separation (it is currently bookkeeping-only), replaced the encrypted-export key derivation with Argon2id, moved the permission/download decision registries from in-memory-only to SQLite persistence, and added SQLCipher at-rest encryption with the key stored in the OS keychain.",
   "current_objective": "Validate the live WebView privacy boundary through bounded manual use without expanding architecture; keep claims honest as gaps are found.",
-  "next_action": "No specific outstanding action. Permission/download registries now persist and were verified against a real packaged-app quit/relaunch cycle. Remaining v1.1_PLAN.md scope (SQLCipher, OS keychain, WebView permission/download callback integration) not started; the last item is blocked on the same gap as session-storage isolation (see docs/recommendations/SESSION_STORAGE_ISOLATION_SCOPE.md).",
+  "next_action": "No specific outstanding action. All of v1.1_PLAN.md's candidate scope is done except WebView permission/download callback integration, which remains blocked on the same native-webview architecture gap as session-storage isolation (see docs/recommendations/SESSION_STORAGE_ISOLATION_SCOPE.md).",
   "evidence": [
     {
       "type": "command",
@@ -55,11 +55,12 @@
     },
     "docs/operator-notes/validation/packaged-webview-validation.json",
     "docs/operator-notes/PACKAGED_WEBVIEW_REVALIDATION_2026_08.md",
-    "docs/releases/PERSISTED_PERMISSION_DOWNLOAD_REGISTRIES.md"
+    "docs/releases/PERSISTED_PERMISSION_DOWNLOAD_REGISTRIES.md",
+    "docs/releases/SQLCIPHER_KEYCHAIN_ENCRYPTION.md"
   ],
   "known_gaps": [
     "Session isolation is TypeScript-layer bookkeeping only; there is one shared WebView, so cookies/storage are not actually partitioned per profile.",
-    "SQLCipher at-rest encryption and OS keychain integration remain planned."
+    "WebView permission/download callback integration is not implemented; the live WebView is a plain iframe with no camera/mic/download grants to callback-integrate with."
   ],
   "constraints": [
     "Do not add a new browser subsystem during validation.",
@@ -68,5 +69,5 @@
     "Manual validation must use bounded, non-sensitive test URLs and content.",
     "Do not let UI copy, audit events, or the threat model claim privacy guarantees that aren't actually implemented."
   ],
-  "updated_at": "2026-08-17T15:25:19Z"
+  "updated_at": "2026-08-17T16:45:14Z"
 }

@@ -7,7 +7,7 @@
   "source": {
     "repository": "zacharymplace/veil",
     "path": ".",
-    "commit": "d7bf6c6"
+    "commit": "d848830"
   },
   "evidence": [
     {
@@ -32,7 +32,7 @@
     },
     {
       "kind": "test",
-      "reference": "cargo test --manifest-path src-tauri/Cargo.toml (8 tests: SQLite bookmark/audit roundtrip, permission/download record roundtrip, Argon2id key derivation x3, encrypted export/import round-trip, wrong-passphrase rejection, short-passphrase rejection)",
+      "reference": "cargo test --manifest-path src-tauri/Cargo.toml (14 tests: SQLite bookmark/audit roundtrip, permission/download record roundtrip, encrypted-database round trip, wrong-key rejection, clean-slate reset x2, Argon2id key derivation x3, encrypted export/import round-trip, wrong-passphrase rejection, short-passphrase rejection, keychain hex encode/decode x2)",
       "result": "pass"
     },
     {
@@ -45,6 +45,17 @@
       "reference": "manual packaged-app quit/relaunch test of permission & download record persistence",
       "result": "pass",
       "note": "2026-08-17. First attempt gave a false negative due to a stale /Applications build from 2026-07-31 that predated this feature; removed it and retested clean against the correct build. Camera/microphone permission decisions and a zip download decision all survived a real quit and relaunch."
+    },
+    {
+      "kind": "release",
+      "reference": "docs/releases/SQLCIPHER_KEYCHAIN_ENCRYPTION.md",
+      "result": "informational"
+    },
+    {
+      "kind": "validation",
+      "reference": "manual packaged-app test of the clean-slate encryption reset with real existing data",
+      "result": "pass",
+      "note": "2026-08-17. Existing veil.sqlite3 (192KB, plain format, 357 audit events accumulated during this cycle's testing) was correctly renamed to veil.sqlite3.pre-encryption.bak on first launch of the SQLCipher-enabled build; the new file has no SQLite header and a plain sqlite3 CLI cannot open it; a bookmark added after the reset survived a real quit and relaunch."
     },
     {
       "kind": "release",
@@ -78,9 +89,9 @@
       "note": "Re-run against commit 5af8ddf on 2026-08-17 by a human operator using the actual packaged .app (not the dev server). Confirmed real page content renders for HTTPS navigation (Wikipedia) and HTTP navigation is blocked with a visible reason. Two non-blocking findings recorded: Google's own anti-framing headers produce a blank content area (not a Veil defect), and the decision log still has a known, unfixed duplicate-entry issue carried over from the prior validation pass."
     }
   ],
-  "last_verified_at": "2026-08-17T15:25:19Z",
+  "last_verified_at": "2026-08-17T16:45:14Z",
   "next_action": {
-    "description": "No specific outstanding action. Permission and download decision registries now persist to SQLite (previously in-memory only), verified against a real quit/relaunch of the packaged app. Remaining candidate scope from v1.1_PLAN.md not yet done: SQLCipher evaluation, OS keychain evaluation, and the WebView permission/download callback integration item (blocked on the same underlying gap as session-storage isolation -- see docs/recommendations/SESSION_STORAGE_ISOLATION_SCOPE.md -- since the live WebView is a plain iframe with no camera/mic/download grants to callback-integrate). The 'WebView Decision Log' duplicate-entries observation from the 2026-08-17 packaged revalidation remains unconfirmed as a real defect.",
+    "description": "No specific outstanding action. All of v1.1_PLAN.md's candidate scope is now done except the WebView permission/download callback integration item, which remains genuinely blocked on the same underlying gap as session-storage isolation (see docs/recommendations/SESSION_STORAGE_ISOLATION_SCOPE.md) -- the live WebView is a plain iframe with no camera/mic/download grants to callback-integrate, and fixing that requires the native-child-webview architecture change scoped there, which is new-subsystem work this project's own posture holds off on absent a validated need. The 'WebView Decision Log' duplicate-entries observation from the 2026-08-17 packaged revalidation remains unconfirmed as a real defect.",
     "command": "npm run check"
   },
   "blockers": [],
@@ -96,13 +107,15 @@
     "live-webview-binding",
     "argon2id-encrypted-export",
     "persisted-permission-registry",
-    "persisted-download-registry"
+    "persisted-download-registry",
+    "sqlcipher-at-rest-encryption",
+    "os-keychain-key-storage"
   ],
-  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging. This cycle fixed several silent-failure and correctness bugs (unhandled Tauri command errors, an isolation-scope cleanup leak, a disconnected vault bookmark count), corrected UI/audit-log claims that overstated session isolation as real per-profile cookie/storage separation — it is currently TypeScript-layer bookkeeping only, since the app runs a single shared WebView — replaced the encrypted-export passphrase key derivation with salted Argon2id (was an unsalted XOR-fold that left most key bytes at zero for short passphrases), and moved the permission and download decision registries from in-memory-only to SQLite persistence, matching the existing bookmarks/audit_events pattern.",
+  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging. This cycle fixed several silent-failure and correctness bugs (unhandled Tauri command errors, an isolation-scope cleanup leak, a disconnected vault bookmark count), corrected UI/audit-log claims that overstated session isolation as real per-profile cookie/storage separation — it is currently TypeScript-layer bookkeeping only, since the app runs a single shared WebView — replaced the encrypted-export passphrase key derivation with salted Argon2id (was an unsalted XOR-fold that left most key bytes at zero for short passphrases), moved the permission and download decision registries from in-memory-only to SQLite persistence, and added SQLCipher at-rest encryption for the live database with the key stored in the OS keychain (existing unencrypted databases get a clean-slate reset, not an in-place migration -- see docs/recommendations/SQLCIPHER_KEYCHAIN_SCOPE.md for why).",
   "current_objective": "Keep the validated packaged WebView privacy boundary honest: fix concrete bugs and false claims as found, without adding new browser subsystems or capability scope.",
   "known_gaps": [
     "Session isolation (per-profile cookies/localStorage/IndexedDB) is not implemented at the WebView/storage level — there is one shared Tauri window/WebView, so all profiles currently share the same browser storage. Tracked honestly in src/app/threatModel.ts under doesNotProtectAgainst.",
-    "SQLCipher-at-rest database encryption and OS keychain integration remain planned, not implemented (surfaced in the app's own Privacy/Database views)."
+    "WebView permission/download callback integration is not implemented -- the live WebView is a plain iframe with no camera/mic/download grants for policy to callback-integrate with. Blocked on the same native-webview architecture gap as session isolation."
   ],
   "constraints": [
     "Do not add a new browser subsystem during validation.",
