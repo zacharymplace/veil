@@ -1,4 +1,5 @@
 pub mod encryption;
+pub mod webview;
 
 use chrono::Utc;
 use tauri::AppHandle;

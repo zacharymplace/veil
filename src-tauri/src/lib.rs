@@ -2,11 +2,13 @@ mod commands;
 mod db;
 mod keychain;
 mod storage;
+mod webview_policy;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .manage(commands::webview::ChildWebviewState::default())
         .invoke_handler(tauri::generate_handler![
             commands::vault_list_bookmarks,
             commands::vault_save_bookmark,
@@ -27,7 +29,10 @@ pub fn run() {
             commands::db_import_json,
             commands::encryption::db_encryption_readiness,
             commands::encryption::db_export_encrypted,
-            commands::encryption::db_import_encrypted
+            commands::encryption::db_import_encrypted,
+            commands::webview::webview_show,
+            commands::webview::webview_hide,
+            commands::webview::webview_set_bounds
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
