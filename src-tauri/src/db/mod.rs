@@ -383,6 +383,7 @@ mod tests {
 pub fn encryption_readiness() -> serde_json::Value {
     serde_json::json!({
         "encryptedExport": true,
+        "keyDerivation": "Argon2id",
         "sqlcipher": "planned",
         "keychain": "planned",
         "secureDelete": "planned",
