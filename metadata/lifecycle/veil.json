@@ -4,9 +4,9 @@
   "project_name": "Veil",
   "phase": "validate",
   "condition": "passing",
-  "summary": "Privacy-focused Tauri browser shell with passing TypeScript, policy, Rust, production build, session isolation, permission, download, audit, WebView contract, and live WebView binding validation.",
-  "current_objective": "Validate the live WebView privacy boundary through bounded manual use without expanding architecture.",
-  "next_action": "Preserve the passing packaged WebView validation and defer further work until a specific validated need or regression appears.",
+  "summary": "Privacy-focused Tauri browser shell with passing TypeScript, policy, Rust, production build, session isolation, permission, download, audit, WebView contract, and live WebView binding validation. Recent work fixed silent-failure bugs, an isolation-scope cleanup leak, a disconnected vault bookmark count, corrected UI/audit claims that overstated session isolation as real storage separation (it is currently bookkeeping-only), and replaced the encrypted-export key derivation with Argon2id.",
+  "current_objective": "Validate the live WebView privacy boundary through bounded manual use without expanding architecture; keep claims honest as gaps are found.",
+  "next_action": "Re-run the packaged macOS WebView manual validation against the current commit, since it predates this round of fixes.",
   "evidence": [
     {
       "type": "command",
@@ -55,11 +55,16 @@
     },
     "docs/operator-notes/validation/packaged-webview-validation.json"
   ],
+  "known_gaps": [
+    "Session isolation is TypeScript-layer bookkeeping only; there is one shared WebView, so cookies/storage are not actually partitioned per profile.",
+    "SQLCipher at-rest encryption and OS keychain integration remain planned."
+  ],
   "constraints": [
     "Do not add a new browser subsystem during validation.",
     "Do not weaken download blocking or permission prompting.",
     "Do not treat smoke tests as proof of packaged desktop behavior.",
-    "Manual validation must use bounded, non-sensitive test URLs and content."
+    "Manual validation must use bounded, non-sensitive test URLs and content.",
+    "Do not let UI copy, audit events, or the threat model claim privacy guarantees that aren't actually implemented."
   ],
-  "updated_at": "2026-07-30"
+  "updated_at": "2026-08-17"
 }

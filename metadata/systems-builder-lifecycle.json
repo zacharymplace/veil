@@ -7,7 +7,7 @@
   "source": {
     "repository": "zacharymplace/veil",
     "path": ".",
-    "commit": "3e44139"
+    "commit": "a3b838e"
   },
   "evidence": [
     {
@@ -32,7 +32,7 @@
     },
     {
       "kind": "test",
-      "reference": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "reference": "cargo test --manifest-path src-tauri/Cargo.toml (7 tests: SQLite roundtrip, Argon2id key derivation x3, encrypted export/import round-trip, wrong-passphrase rejection, short-passphrase rejection)",
       "result": "pass"
     },
     {
@@ -63,33 +63,40 @@
     {
       "kind": "validation",
       "reference": "docs/operator-notes/validation/packaged-webview-validation.json",
-      "result": "pass"
+      "result": "pass",
+      "note": "Predates this round of fixes (commit 3e44139). Re-run before relying on it for the current commit; see next_action."
     }
   ],
-  "last_verified_at": "2026-07-31T21:55:48.580207Z",
+  "last_verified_at": "2026-08-17T00:00:00Z",
   "next_action": {
-    "description": "Preserve the passing packaged WebView validation and defer further work until a specific validated need or regression appears.",
+    "description": "Re-run the manual packaged macOS WebView validation against the current commit before treating it as current evidence — it was last performed before this round of bug fixes and the Argon2id crypto change. No new browser subsystem was added, so the existing validation script and checklist should still apply as-is.",
     "command": "npm run validate:packaged-webview"
   },
   "blockers": [],
   "capabilities": [
     "https-only-navigation",
     "webview-sandbox-policy",
-    "session-isolation",
+    "session-bookkeeping-isolation",
     "permission-governance",
     "download-blocking",
     "audit-console",
     "decision-logging",
     "policy-badges",
-    "live-webview-binding"
+    "live-webview-binding",
+    "argon2id-encrypted-export"
   ],
-  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging.",
-  "current_objective": "Preserve the validated packaged WebView privacy boundary without expanding architecture.",
+  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging. This round fixed several silent-failure and correctness bugs (unhandled Tauri command errors, an isolation-scope cleanup leak, a disconnected vault bookmark count) and corrected UI/audit-log claims that overstated session isolation as real per-profile cookie/storage separation — it is currently TypeScript-layer bookkeeping only, since the app runs a single shared WebView. The encrypted-export passphrase key derivation was replaced with salted Argon2id (was an unsalted XOR-fold that left most key bytes at zero for short passphrases).",
+  "current_objective": "Keep the validated packaged WebView privacy boundary honest: fix concrete bugs and false claims as found, without adding new browser subsystems or capability scope.",
+  "known_gaps": [
+    "Session isolation (per-profile cookies/localStorage/IndexedDB) is not implemented at the WebView/storage level — there is one shared Tauri window/WebView, so all profiles currently share the same browser storage. Tracked honestly in src/app/threatModel.ts under doesNotProtectAgainst.",
+    "SQLCipher-at-rest database encryption and OS keychain integration remain planned, not implemented (surfaced in the app's own Privacy/Database views)."
+  ],
   "constraints": [
     "Do not add a new browser subsystem during validation.",
     "Do not weaken download blocking or permission prompting.",
     "Do not treat smoke tests as proof of packaged desktop behavior.",
-    "Manual validation must use bounded, non-sensitive test URLs and content."
+    "Manual validation must use bounded, non-sensitive test URLs and content.",
+    "Do not let UI copy, audit events, or the threat model claim privacy guarantees (e.g. storage isolation) that aren't actually implemented."
   ],
   "legacy_manifest": "metadata/lifecycle/veil.json"
 }
