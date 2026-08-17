@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { normalizeAddress } from "../../lib/url";
 import {
   createSession,
@@ -20,12 +20,22 @@ const PROFILES: SessionProfile[] = [
   "adult",
 ];
 
+const EMPTY_VAULT_SUMMARY = { bookmarks: 0, collections: COLLECTIONS.length, encrypted: false, storageMode: "SQLite" };
+
 export function HomeView() {
   const [address, setAddress] = useState("");
   const [session, setSession] = useState<BrowserSession>(createSession("temporary"));
   const [error, setError] = useState("");
-  const vault = vaultSummary();
+  const [vault, setVault] = useState(EMPTY_VAULT_SUMMARY);
   const score = privacyScore();
+
+  async function refreshVaultSummary() {
+    setVault(await vaultSummary());
+  }
+
+  useEffect(() => {
+    refreshVaultSummary();
+  }, []);
 
   function selectProfile(profile: SessionProfile) {
     setSession(createSession(profile));
@@ -50,6 +60,7 @@ export function HomeView() {
         tags: [session.profile],
         notes: `Saved from ${sessionLabel(session.profile)} session.`,
       });
+      await refreshVaultSummary();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));
     }

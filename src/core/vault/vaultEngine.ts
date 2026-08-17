@@ -27,6 +27,6 @@ export async function wipeCoreVault(): Promise<void> {
   return wipeVaultAsync();
 }
 
-export function coreVaultSummary() {
+export async function coreVaultSummary() {
   return vaultSummary();
 }

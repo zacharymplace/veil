@@ -1,9 +1,13 @@
-import { useMemo } from "react";
-import { runCoreDiagnostics, getThreatModel } from "../../core";
+import { useEffect, useState } from "react";
+import { runCoreDiagnostics, getThreatModel, type CoreDiagnostic } from "../../core";
 
 export function CoreView() {
-  const diagnostics = useMemo(() => runCoreDiagnostics(), []);
+  const [diagnostics, setDiagnostics] = useState<CoreDiagnostic[]>([]);
   const threatModel = getThreatModel();
+
+  useEffect(() => {
+    runCoreDiagnostics().then(setDiagnostics);
+  }, []);
 
   return (
     <section className="view">

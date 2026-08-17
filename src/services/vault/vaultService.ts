@@ -1,10 +1,10 @@
 import { DEFAULT_COLLECTIONS } from "../../vault/collections/collectionsRepository";
-import { listVaultBookmarks } from "../../vault/bookmarks/bookmarkRepository";
+import { listBookmarksAsync } from "../../features/vault/vaultAsync";
 
 export const COLLECTIONS = DEFAULT_COLLECTIONS;
 
-export function vaultSummary() {
-  const bookmarks = listVaultBookmarks();
+export async function vaultSummary() {
+  const bookmarks = await listBookmarksAsync();
 
   return {
     bookmarks: bookmarks.length,

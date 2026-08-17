@@ -7,8 +7,8 @@ export type CoreDiagnostic = {
   detail: string;
 };
 
-export function runCoreDiagnostics(): CoreDiagnostic[] {
-  const vault = coreVaultSummary();
+export async function runCoreDiagnostics(): Promise<CoreDiagnostic[]> {
+  const vault = await coreVaultSummary();
   const threatModel = getThreatModel();
 
   return [
