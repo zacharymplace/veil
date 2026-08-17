@@ -4,9 +4,9 @@
   "project_name": "Veil",
   "phase": "validate",
   "condition": "passing",
-  "summary": "Privacy-focused Tauri browser shell with passing TypeScript, policy, Rust, production build, session isolation, permission, download, audit, WebView contract, and live WebView binding validation. Recent work fixed silent-failure bugs, an isolation-scope cleanup leak, a disconnected vault bookmark count, corrected UI/audit claims that overstated session isolation as real storage separation, replaced the encrypted-export key derivation with Argon2id, moved the permission/download decision registries from in-memory-only to SQLite persistence, added SQLCipher at-rest encryption with the key stored in the OS keychain, and -- at explicit user direction, scope agreed in advance -- migrated the live WebView from an iframe to a real native child webview with genuine Rust-enforced download and navigation policy.",
+  "summary": "Privacy-focused Tauri browser shell with passing TypeScript, policy, Rust, production build, session isolation, permission, download, audit, WebView contract, and live WebView binding validation. Recent work fixed silent-failure bugs, an isolation-scope cleanup leak, a disconnected vault bookmark count, corrected UI/audit claims that overstated session isolation as real storage separation, replaced the encrypted-export key derivation with Argon2id, moved the permission/download decision registries from in-memory-only to SQLite persistence, added SQLCipher at-rest encryption with the key stored in the OS keychain, migrated the live WebView from an iframe to a real native child webview with genuine Rust-enforced download and navigation policy, and gave every profile its own real WKWebsiteDataStore with genuine wipe-on-close for ephemeral profiles -- all at explicit user direction, scope agreed in advance each time.",
   "current_objective": "Validate the live WebView privacy boundary through bounded manual use. Architecture expansion happens only at explicit user direction with scope agreed in advance, not proactively; keep claims honest as gaps are found.",
-  "next_action": "No specific outstanding action. Two things remain open by design: permission-callback integration (blocked on tauri not yet wrapping wry 0.56's permission API) and inline-content-type download detection (no fix possible with Tauri's current public API for external URLs). Both re-check when Tauri ships the relevant API.",
+  "next_action": "No specific outstanding action. Two things remain open by design: permission-callback integration (blocked on tauri not yet wrapping wry 0.56's permission API) and inline-content-type download detection (no fix possible with Tauri's current public API for external URLs). Both re-check when Tauri ships the relevant API. A user-suggested future idea, not scoped: per-profile content filtering based on each profile's policy parameters.",
   "evidence": [
     {
       "type": "command",
@@ -57,12 +57,14 @@
     "docs/operator-notes/PACKAGED_WEBVIEW_REVALIDATION_2026_08.md",
     "docs/releases/PERSISTED_PERMISSION_DOWNLOAD_REGISTRIES.md",
     "docs/releases/SQLCIPHER_KEYCHAIN_ENCRYPTION.md",
-    "docs/releases/NATIVE_WEBVIEW_MIGRATION.md"
+    "docs/releases/NATIVE_WEBVIEW_MIGRATION.md",
+    "docs/releases/SESSION_STORAGE_ISOLATION.md"
   ],
   "known_gaps": [
-    "Session isolation is TypeScript-layer bookkeeping only; there is one shared WebView, so cookies/storage are not actually partitioned per profile.",
+    "Per-profile storage isolation only applies on macOS/iOS and only inside the packaged app, not the dev preview; Windows/Linux not implemented.",
     "Permission-callback integration (camera/mic/geolocation) is blocked on tauri not yet wrapping wry 0.56.0's permission-request API.",
-    "Content a site renders inline instead of forcing a download (e.g. a PDF export) is not caught by download blocking; Tauri's on_web_resource_request is documented as tauri-protocol-only, not applicable to external URLs."
+    "Content a site renders inline instead of forcing a download (e.g. a PDF export) is not caught by download blocking; Tauri's on_web_resource_request is documented as tauri-protocol-only, not applicable to external URLs.",
+    "Per-profile content filtering/customization -- a user-suggested future idea, not scoped or started."
   ],
   "constraints": [
     "Do not add a new browser subsystem or expand architecture proactively -- only at explicit user direction with scope agreed in advance.",
@@ -71,5 +73,5 @@
     "Manual validation must use bounded, non-sensitive test URLs and content.",
     "Do not let UI copy, audit events, or the threat model claim privacy guarantees that aren't actually implemented."
   ],
-  "updated_at": "2026-08-17T17:58:14Z"
+  "updated_at": "2026-08-17T19:46:34Z"
 }

@@ -7,7 +7,7 @@
   "source": {
     "repository": "zacharymplace/veil",
     "path": ".",
-    "commit": "46e49e2"
+    "commit": "d0867ad"
   },
   "evidence": [
     {
@@ -32,7 +32,7 @@
     },
     {
       "kind": "test",
-      "reference": "cargo test --manifest-path src-tauri/Cargo.toml (14 tests: SQLite bookmark/audit roundtrip, permission/download record roundtrip, encrypted-database round trip, wrong-key rejection, clean-slate reset x2, Argon2id key derivation x3, encrypted export/import round-trip, wrong-passphrase rejection, short-passphrase rejection, keychain hex encode/decode x2)",
+      "reference": "cargo test --manifest-path src-tauri/Cargo.toml (28 tests: SQLite bookmark/audit roundtrip, permission/download record roundtrip, profile_data_stores upsert, encrypted-database round trip, wrong-key rejection, clean-slate reset x2, Argon2id key derivation x3, encrypted export/import round-trip, wrong-passphrase rejection, short-passphrase rejection, keychain hex encode/decode x2, webview navigation policy x4, download risk classification x4, profile persistence classification x2, data-store id hex round-trip x2)",
       "result": "pass"
     },
     {
@@ -98,11 +98,22 @@
       "reference": "manual packaged-app test of native WebView download/navigation/new-window enforcement",
       "result": "pass",
       "note": "2026-08-17. User-directed architecture change (explicit scope agreed in advance: webview + downloads + navigation, not session isolation, not permission integration). A real download (GitHub release .zip, forces Content-Disposition: attachment) was blocked and recorded in Audit. A window.open()-style request initially bypassed both on_navigation and on_download entirely (wry's default behavior) until on_new_window was added to deny it. Positioning verified correct at default window size and after resize/maximize. Known, documented limitation: content a site renders inline instead of forcing a download (e.g. Wikipedia's PDF export, via WebKit's built-in PDF viewer) is not caught, since on_navigation only checks URL scheme, not response content type -- confirmed no fix is possible with Tauri's current public API (on_web_resource_request is documented as tauri-protocol-only, not applicable to external URLs)."
+    },
+    {
+      "kind": "release",
+      "reference": "docs/releases/SESSION_STORAGE_ISOLATION.md",
+      "result": "informational"
+    },
+    {
+      "kind": "validation",
+      "reference": "manual packaged-app test of real per-profile WKWebsiteDataStore isolation",
+      "result": "pass",
+      "note": "2026-08-17. User-directed, scope expanded beyond the original recommendation (persistent profiles only) to full isolation for all profiles once wry 0.55.1 (already pinned) was confirmed to expose remove_data_store directly. Three real bugs found only by running the packaged app (none visible from cargo check/test): a removal/teardown race ('data store is currently opened'), a fixed webview label causing the previous profile's content to keep showing after switching, and scroll desync from only listening to ResizeObserver. All three fixed and reverified. Direct proof of isolation: switching from Medical (real Google search state) to Financial showed a fresh, unauthenticated Google homepage. Confirmed via a throwaway Rust probe reading the encrypted database directly that profile_data_stores persists correctly and audit events record each open/remove."
     }
   ],
-  "last_verified_at": "2026-08-17T17:58:14Z",
+  "last_verified_at": "2026-08-17T19:46:34Z",
   "next_action": {
-    "description": "No specific outstanding action. The live WebView is now a real native child webview (user-directed, scope agreed in advance) with genuine download and navigation enforcement in Rust. Two things remain open by design, not oversight: (1) permission-callback integration (camera/mic) is blocked on tauri not yet wrapping wry 0.56's permission-request API; (2) inline-rendered non-HTML content (e.g. PDF exports) isn't caught by download blocking, and no fix is possible with Tauri's current public API for external URLs. Both re-check when Tauri ships the relevant API rather than being worked around. The 'WebView Decision Log' duplicate-entries observation from the 2026-08-17 packaged revalidation remains separately unconfirmed as a real defect.",
+    "description": "No specific outstanding action. All profiles now have real per-profile WKWebsiteDataStore isolation (macOS/iOS only), with genuine wipe-on-close for ephemeral profiles. Two things remain open by design, not oversight: (1) permission-callback integration (camera/mic) is blocked on tauri not yet wrapping wry 0.56's permission-request API; (2) inline-rendered non-HTML content (e.g. PDF exports) isn't caught by download blocking, and no fix is possible with Tauri's current public API for external URLs. A user-suggested future idea, not scoped or started: per-profile content filtering/customization based on each profile's policy parameters. The 'WebView Decision Log' duplicate-entries observation from the 2026-08-17 packaged revalidation remains separately unconfirmed as a real defect.",
     "command": "npm run check"
   },
   "blockers": [],
@@ -124,14 +135,17 @@
     "native-child-webview",
     "native-download-enforcement",
     "native-navigation-enforcement",
-    "native-new-window-denial"
+    "native-new-window-denial",
+    "per-profile-webview-data-store-isolation",
+    "ephemeral-profile-wipe-on-close"
   ],
-  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging. This cycle fixed several silent-failure and correctness bugs (unhandled Tauri command errors, an isolation-scope cleanup leak, a disconnected vault bookmark count), corrected UI/audit-log claims that overstated session isolation as real per-profile cookie/storage separation, replaced the encrypted-export passphrase key derivation with salted Argon2id, moved the permission and download decision registries from in-memory-only to SQLite persistence, added SQLCipher at-rest encryption for the live database with the key stored in the OS keychain, and -- at the user's explicit direction, with scope agreed in advance -- migrated the live WebView from an iframe to a real native child webview with genuine Rust-enforced download and navigation policy. Session isolation (cookies/storage) is still TypeScript-layer bookkeeping only; permission-callback integration and inline-content-type download detection remain blocked on gaps in Tauri's current public API, not oversight.",
+  "summary": "Privacy-focused Tauri browser shell with passing automated validation and a canonical human-verified packaged macOS WebView validation covering HTTPS-only navigation, blocked HTTP navigation and downloads, sandboxing, policy badges, and decision logging. This cycle fixed several silent-failure and correctness bugs (unhandled Tauri command errors, an isolation-scope cleanup leak, a disconnected vault bookmark count), corrected UI/audit-log claims that overstated session isolation as real per-profile cookie/storage separation, replaced the encrypted-export passphrase key derivation with salted Argon2id, moved the permission and download decision registries from in-memory-only to SQLite persistence, added SQLCipher at-rest encryption for the live database with the key stored in the OS keychain, and -- at the user's explicit direction, with scope agreed in advance -- migrated the live WebView from an iframe to a real native child webview with genuine Rust-enforced download and navigation policy, then went further to give every profile its own real WKWebsiteDataStore with genuine wipe-on-close for ephemeral profiles. Permission-callback integration and inline-content-type download detection remain blocked on gaps in Tauri's current public API, not oversight.",
   "current_objective": "Keep the validated packaged WebView privacy boundary honest: fix concrete bugs and false claims as found. Architecture expansion happens only at explicit user direction with scope agreed in advance, not proactively.",
   "known_gaps": [
-    "Session isolation (per-profile cookies/localStorage/IndexedDB) is not implemented at the WebView/storage level — there is one shared Tauri window/WebView, so all profiles currently share the same browser storage. Tracked honestly in src/app/threatModel.ts under doesNotProtectAgainst. Scoped in docs/recommendations/SESSION_STORAGE_ISOLATION_SCOPE.md; not started.",
+    "Per-profile storage isolation only applies on macOS/iOS (data_store_identifier is platform-specific) and only inside the packaged app, not the dev preview. Windows/Linux would need a separate data_directory-based approach, not implemented. Tracked honestly in src/app/threatModel.ts.",
     "Permission-callback integration (camera/mic/geolocation) is not implemented -- wry 0.56.0 added the underlying PermissionKind/PermissionResponse API, but tauri (pinned and latest-published at 2.11.5) hasn't wrapped it in WebviewBuilder yet.",
-    "Content a site renders inline instead of forcing a download (e.g. a PDF export handled by the WebView's built-in viewer) is not caught by download blocking -- on_navigation only checks URL scheme, not response content type, and Tauri's on_web_resource_request is documented as tauri-protocol-only, not applicable to external URLs. No fix possible with the current public API."
+    "Content a site renders inline instead of forcing a download (e.g. a PDF export handled by the WebView's built-in viewer) is not caught by download blocking -- on_navigation only checks URL scheme, not response content type, and Tauri's on_web_resource_request is documented as tauri-protocol-only, not applicable to external URLs. No fix possible with the current public API.",
+    "Per-profile content filtering/customization (restricting what's allowed/displayed based on each profile's own policy parameters) -- a user-suggested future idea, not scoped or started."
   ],
   "constraints": [
     "Do not add a new browser subsystem or expand architecture proactively -- only at explicit user direction, with scope agreed in advance (see the 2026-08-17 native WebView migration for the pattern: user asked to resolve a specific blocked item, scope was confirmed via options before implementation started).",
