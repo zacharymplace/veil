@@ -7,3 +7,6 @@ src-tauri/target
 .env
 .env.*
 *.log
+
+# Local AI tooling
+.claude/
