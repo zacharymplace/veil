@@ -147,7 +147,7 @@ p {
   place-items: center;
   background: var(--spot);
   border: var(--border);
-  color: var(--paper);
+  color: var(--on-spot);
   font-family: var(--font-display);
 }
 
@@ -464,7 +464,7 @@ button:disabled:hover {
 
 .session-chip.active {
   background: var(--spot);
-  color: var(--paper);
+  color: var(--on-spot);
   border: 2px solid var(--rule-strong);
 }
 
@@ -535,6 +535,11 @@ button:disabled:hover {
 
 .audit-row:first-child {
   border-top: none;
+}
+
+.audit-row strong,
+.audit-row span {
+  overflow-wrap: anywhere;
 }
 
 .audit-row pre {
@@ -612,3 +617,6 @@ textarea {
 .decision-log {
   margin-top: 24px;
 }
+
+/* Long URLs in narrow grid columns (Engine screen at 400px) must wrap instead of spilling. */
+p { overflow-wrap: anywhere; }
