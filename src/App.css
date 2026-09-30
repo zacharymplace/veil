@@ -50,7 +50,7 @@ button {
 
 button:hover {
   background: var(--spot);
-  color: var(--paper);
+  color: var(--on-spot);
 }
 
 button:focus-visible {
@@ -318,7 +318,7 @@ nav {
 
 .danger-button:hover {
   background: var(--spot);
-  color: var(--paper);
+  color: var(--on-spot);
 }
 
 .error-banner {
@@ -502,6 +502,7 @@ button:disabled:hover {
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--fg);
+  overflow-wrap: anywhere;
 }
 
 .collection-grid {
@@ -620,3 +621,11 @@ textarea {
 
 /* Long URLs in narrow grid columns (Engine screen at 400px) must wrap instead of spilling. */
 p { overflow-wrap: anywhere; }
+
+.card > pre {
+  max-width: 100%;
+  overflow: auto;
+  border: 1.5px solid var(--rule-strong);
+  background: var(--surface);
+  padding: 0.75rem;
+}
